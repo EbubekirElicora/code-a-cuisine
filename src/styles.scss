@@ -1,1 +1,226 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --font-quicksand:
+    "Quicksand", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-ubuntu:
+    "Ubuntu", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --color-btn-green: rgba(0, 128, 0, 1);
+  --color-text-cremy: rgba(250, 240, 230, 1);
+  --color-text-green: rgba(30, 85, 21, 1);
+  --color-text-light-green: rgba(57, 96, 57, 1);
+  --color-text-dark-green: rgba(16, 49, 11, 1);
+  --color-text-black: rgba(0, 0, 0, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  height: 100vh;
+  font-family: var(--font-quicksand);
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+}
+
+img {
+  display: block;
+}
+
+.green-btn {
+  font-family: var(--font-quicksand);
+  color: var(--color-text-cremy);
+  cursor: pointer;
+  border: none;
+  background: var(--color-text-light-green);
+  font-weight: 600;
+  padding: 16px 26px;
+  font-size: 24px;
+  width: 186px;
+  transition:
+    background-color 300ms ease-out,
+    transform 300ms ease-out;
+  &:hover {
+    background-color: rgba(5, 94, 5, 1);
+    font-weight: 700;
+  }
+}
+
+.cremy-btn {
+  font-family: var(--font-quicksand);
+  color: var(--color-btn-green);
+  cursor: pointer;
+  border: none;
+  background: var(--color-text-cremy);
+  font-weight: 600;
+  padding: 16px 26px;
+  font-size: 24px;
+  width: 186px;
+  transition:
+    background-color 300ms ease-out,
+    transform 300ms ease-out;
+  &:hover {
+    background-color: rgba(250, 224, 198, 1);
+    font-weight: 700;
+  }
+}
+
+.header-logo {
+  cursor: pointer;
+}
+
+.d-none {
+  display: none;
+}
+
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/assets/fonts/quicksand-v37-latin-300.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/quicksand-v37-latin-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/fonts/quicksand-v37-latin-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/fonts/quicksand-v37-latin-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Quicksand";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/quicksand-v37-latin-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-300.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: italic;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-300italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-500italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Ubuntu";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/ubuntu-v21-latin-700italic.woff2") format("woff2");
+}
+
+@media (max-width: 1400px) {
+  .hero-header,
+  .header-container,
+  .header-logo,
+  .pref-header,
+  .loading-overlay-header,
+  .recipe-header {
+    top: 12px !important;
+    left: 16px !important;
+  }
+}
+
+@media (max-width: 1025px) {
+  .cremy-btn,
+  .green-btn {
+    font-size: 16px;
+    width: 128px;
+  }
+}
+
+@media (max-width: 450px) {
+  .hero-header img,
+  .header-logo {
+    width: 67% !important;
+  }
+}

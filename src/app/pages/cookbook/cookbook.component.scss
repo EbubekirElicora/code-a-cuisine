@@ -1,0 +1,324 @@
+.cookbook-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+main {
+  max-width: 1330px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 200px;
+}
+
+.cookbook-main-size {
+  max-width: 1920px;
+}
+
+.header-container {
+  position: absolute;
+  top: 40px;
+  left: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.back-link {
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-quicksand);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 10px;
+  color: var(--color-text-light-green);
+  padding-inline: 0;
+}
+
+/* HEADER-BLOCK */
+
+.cookbook-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+
+.cookbook-header-main h1 {
+  margin: 0 0 16px;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 65px;
+  color: var(--color-text-green);
+}
+
+.cookbook-subtitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-dark-green);
+}
+
+/* Button oben rechts */
+.header-generate-btn {
+  min-width: 220px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-quicksand);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 100%;
+  color: var(--color-text-cremy);
+  background-color: var(--color-btn-green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* MOST LIKED */
+.most-liked {
+  padding: 40px 24px;
+  border-radius: 20px;
+  background-color: rgba(57, 96, 57, 0.04);
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.header-content-left {
+  flex: 0 0 33%;
+  max-width: 33%;
+}
+
+.header-content-right {
+  flex: 1 1 67%;
+  max-width: 67%;
+  min-width: 0;
+}
+
+.most-liked h2 {
+  margin: 0 0 16px;
+  font-size: 24px;
+  line-height: 100%;
+  font-weight: 600;
+  color: var(--color-text-green);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.most-liked-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  scrollbar-width: none;
+}
+
+.most-liked-row,
+.most-liked-row * {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.most-liked-row::-webkit-scrollbar {
+  height: 0;
+  background: transparent;
+}
+
+.most-liked-row::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.most-liked-card {
+  cursor: pointer;
+  padding: 16px 12px;
+  border-radius: 16px;
+  background-color: rgba(219, 224, 219, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 370px;
+  min-height: 120px;
+  transition:
+    background-color 300ms ease-out,
+    transform 300ms ease-out;
+  &:hover {
+    background-color: rgba(219, 224, 219, 1);
+  }
+}
+
+.most-liked-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-text-light-green);
+}
+
+.most-liked-content {
+  display: flex;
+  justify-content: space-between;
+}
+
+.most-liked-card h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-green);
+  width: 75%;
+}
+
+.most-liked-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Chips & Likes (wiederverwendbar) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 30px;
+  background-color: rgba(57, 96, 57, 0.12);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-dark-green);
+}
+
+.likes-badge {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 30px;
+  background-color: rgba(57, 96, 57, 0.3);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-dark-green);
+}
+
+/* GRID MIT DEN CUISINE-KARTEN */
+
+.cookbook-grid {
+  padding-top: 80px;
+}
+
+.cuisine-section {
+  width: 100%;
+}
+
+.cuisine-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 400px));
+  gap: 70px;
+}
+
+.cuisine-card {
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 8px;
+}
+
+.cuisine-card-image-wrapper {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+}
+
+.cuisine-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  transition: transform 0.35s ease;
+}
+
+.cuisine-card:hover .cuisine-image {
+  transform: scale(1.08);
+}
+
+.no-favs-text {
+  font-size: 18px;
+  line-height: 100%;
+  font-weight: 500;
+  color: var(--color-text-dark-green);
+}
+
+.cuisine-card-footer h2 {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 100%;
+  color: var(--color-text-green);
+  font-family: var(--font-quicksand);
+}
+
+.cuisine-card-footer p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 120%;
+  color: var(--color-text-light-green);
+}
+
+.footer-generate {
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-quicksand);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-text-green);
+  padding: 16px 26px 16px 26px;
+  transition:
+    background-color 300ms ease-out,
+    transform 300ms ease-out;
+  &:hover {
+    background-color: rgba(57, 96, 57, 0.1);
+  }
+}
+
+.footer-generate-container {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 48px;
+  padding-bottom: 64px;
+}
+
+/* Allgemeine Error / Loading Texte */
+
+.error {
+  color: red;
+  font-size: 16px;
+  margin-top: 16px;
+}

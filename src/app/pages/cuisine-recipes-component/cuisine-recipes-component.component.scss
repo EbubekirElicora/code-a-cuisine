@@ -1,0 +1,261 @@
+.cuisine-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+main {
+  max-width: 1920px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-container {
+  position: absolute;
+  top: 40px;
+  left: 68px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Backlink wie gehabt */
+.back-link {
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-quicksand);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 10px;
+  color: var(--color-text-light-green);
+  padding-inline: 0;
+}
+
+.generate-btn-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 40px;
+}
+
+.green-btn {
+  width: 262px;
+}
+
+.cuisine-hero {
+  display: flex;
+  justify-content: center;
+}
+
+.cuisine-hero-wrapper {
+  margin-top: 136px;
+  height: 1400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cuisine-hero-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cuisine-hero h1 {
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 100%;
+  color: var(--color-text-green);
+  position: absolute;
+  display: flex;
+}
+
+.cuisine-hero .emoji {
+  margin-left: 8px;
+  font-size: 26px;
+}
+
+/* MAIN-LISTE */
+
+.cuisine-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 64px;
+}
+
+.pagination {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.page-btn {
+  border: none;
+  background: transparent;
+  padding-inline: 0;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-dark-green);
+  transition: transform 100ms ease-out;
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.page-btn--active {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-btn-green);
+}
+
+.page-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.recipe-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  row-gap: 16px;
+  width: 900px;
+}
+
+.recipe-list-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: 8px;
+  padding: 6px 10px 6px 10px;
+  transition:
+    background-color 300ms ease-out,
+    transform 300ms ease-out;
+  &:hover {
+    background-color: rgba(250, 240, 230, 0.7);
+    border-radius: 16px;
+  }
+}
+
+/* Nummer links (kleiner Kreis) */
+
+.recipe-number {
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recipe-number span {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-green) rgba(57, 96, 57, 1);
+  background-color: rgb(246, 227, 207);
+}
+
+/* Zeit + Titel */
+
+.recipe-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recipe-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-text-light-green);
+}
+
+.recipe-title-link {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 100%;
+  font-family: var(--font-quicksand);
+  color: var(--color-text-green);
+  text-decoration: none;
+}
+
+/* Rechts: Tags + Likes */
+
+.recipe-meta {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.recipe-title-container {
+  display: flex;
+  align-items: center;
+}
+
+.chip-container {
+  display: flex;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 30px;
+  background-color: rgba(57, 96, 57, 0.2);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-dark-green);
+}
+
+.likes-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 30px;
+  background-color: rgba(57, 96, 57, 0.3);
+  font-size: 16px;
+  min-width: 64px;
+  font-weight: 500;
+  line-height: 100%;
+  color: var(--color-text-dark-green);
+}
+
+.error {
+  color: red;
+  font-size: 16px;
+  margin-bottom: 16px;
+}

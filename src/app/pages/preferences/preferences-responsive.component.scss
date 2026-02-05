@@ -1,0 +1,87 @@
+@media (max-width: 750px) {
+  .preferences-inner {
+    width: 100%;
+    padding-inline: 16px;
+    padding-bottom: 40px;
+  }
+
+  .preferences-inner h1 {
+    font-size: 24px;
+    margin: 0 0 24px;
+  }
+
+  .pref-header {
+    align-items: flex-start;
+  }
+
+  .counter-unit {
+    font-size: 18px;
+  }
+
+  .counter-label {
+    font-size: 16px;
+    margin: 0 0 8px;
+  }
+
+  .pref-section-title span {
+    font-weight: 600;
+  }
+
+  .chip-row {
+    gap: 10px;
+    row-gap: 16px;
+  }
+
+  .pref-top-row {
+    margin-bottom: 32px;
+    gap: 24px;
+    flex-direction: column;
+  }
+
+  .mobile-div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .pref-card {
+    padding: 32px 16px 32px 16px;
+  }
+
+  .error-card {
+    max-width: 100%;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 450px) {
+  .preferences-inner {
+    margin-top: 120px;
+  }
+
+  .error-message {
+    font-size: 16px;
+  }
+
+  .cremy-btn {
+    justify-content: flex-start;
+    font-size: 18px;
+    line-height: 100%;
+    width: 258px;
+    padding: 4px 16px;
+  }
+
+  .pref-header {
+    gap: 16px;
+  }
+
+  .back-btn span {
+    display: none;
+  }
+
+  .loading-text {
+    font-size: 36px;
+    margin-inline-start: 22px;
+  }
+}

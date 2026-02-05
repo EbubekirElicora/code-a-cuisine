@@ -1,0 +1,157 @@
+@media (max-width: 1400px) {
+  main {
+    max-width: clamp(1200px, 92vw, 1330px);
+    padding-inline: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .most-liked {
+    width: auto;
+  }
+
+  .most-liked-card {
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .most-liked {
+    padding: 16px 10px;
+    border-radius: 20px;
+    background-color: rgba(57, 96, 57, 0.04);
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  main {
+    padding-inline: 16px;
+    max-width: clamp(900px, 92vw, 1200px);
+    --t: clamp(0, (100vw - 900px) / 300, 1);
+    --h-scale: calc(0.81 + 0.19 * var(--t));
+  }
+
+  .cuisine-grid {
+    gap: 24px;
+  }
+
+  .cuisine-card-image-wrapper {
+    transform: scale(var(--img-scale));
+    transform-origin: center;
+  }
+
+  .header-content-left {
+    max-width: none;
+  }
+
+  .header-content-right {
+    max-width: 100%;
+  }
+
+  .most-liked-card {
+    min-width: 320px;
+    min-height: 106px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .cuisine-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 400px));
+    gap: 24px;
+    justify-content: space-between;
+  }
+
+  .cookbook-header-main h1 {
+    font-size: 40px;
+    line-height: 100%;
+  }
+
+  .cookbook-subtitle,
+  .most-liked-card h3,
+  .footer-generate {
+    font-size: 18px;
+  }
+
+  .most-liked-time img {
+    width: 16px;
+  }
+
+  .footer-generate-container {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  main {
+    max-width: clamp(300px, 95vw, 1200px);
+  }
+
+  .most-liked-time {
+    gap: 4px;
+  }
+
+  .cuisine-grid {
+    grid-template-columns: repeat(2, minmax(0, 320px));
+  }
+
+  .cuisine-image {
+    width: 320px;
+    height: 256px;
+  }
+
+  .cuisine-grid {
+    justify-content: center;
+    grid-template-columns: repeat(1, minmax(0, 320px));
+  }
+
+  .footer-generate-container {
+    padding-bottom: 40px;
+    padding-top: 40px;
+  }
+
+  .footer-generate {
+    padding: 4px 16px;
+  }
+}
+
+@media (max-width: 450px) {
+  .header-content-right img {
+    width: 24px;
+  }
+
+  .most-liked-card {
+    min-width: 250px;
+    min-height: 106px;
+  }
+
+  .likes-badge {
+    padding: 2px 6px;
+  }
+
+  .most-liked-meta {
+    align-items: flex-start;
+  }
+
+  .back-link span {
+    display: none;
+  }
+
+  .header-container {
+    gap: 16px;
+  }
+
+  .most-liked-time img {
+    width: 16px !important;
+  }
+
+  main {
+    margin-top: 120px;
+  }
+
+  .most-liked-time {
+    align-items: flex-start;
+  }
+}

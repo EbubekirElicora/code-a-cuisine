@@ -1,0 +1,42 @@
+<section class="hero">
+  <header class="hero-header">
+    <img src="assets/img/icons/menuBar_cremy.svg" alt="Code à Cuisine" />
+  </header>
+  <div class="hero-container-positions">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h2>AI-Powered recipe generator</h2>
+        <h1>Code à Cuisine</h1>
+
+        <button class="cremy-btn" [routerLink]="['/generate']">
+          Get started
+        </button>
+
+        <div class="navigation-link-container">
+          <h3>Hungry for inspiration?</h3>
+          <div class="navigation">
+            <button type="button" class="cookbook-btn" routerLink="/cookbook">
+              Go to cookbook
+              <img
+                src="assets/img/icons/arrow_right_cremy.svg"
+                alt="Go to cookbook"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right-container">
+      <img
+        class="hero-image"
+        src="assets/img/images/heroAllImages.png"
+        alt="hero image"
+      />
+      <img
+        class="hero-image-responsive d-none"
+        src="/assets/img/images/hero-respo.png"
+        alt="hero image responsive"
+      />
+    </div>
+  </div>
+</section>

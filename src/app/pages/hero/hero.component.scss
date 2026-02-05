@@ -1,0 +1,125 @@
+.hero {
+  background-color: rgba(57, 96, 57, 1);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.hero-inner {
+  padding: 0px 65px 0px 83px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hero-header {
+  position: absolute;
+  top: 40px;
+  left: 68px;
+}
+
+.hero-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.hero-content {
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero h1 {
+  font-size: 104px;
+  color: var(--color-text-cremy);
+  font-family: var(--font-ubuntu);
+  line-height: 1;
+  margin-bottom: 64px;
+  font-weight: 700;
+}
+
+.hero h2 {
+  font-size: 48px;
+  color: var(--color-text-cremy);
+  line-height: 1;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.hero h3 {
+  font-size: 32px;
+  color: var(--color-text-cremy);
+  font-family: var(--font-ubuntu);
+  line-height: 1.04;
+  font-weight: 500;
+}
+
+.hero p {
+  font-size: 20px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-text-cremy);
+  margin: 0;
+}
+
+.cremy-btn {
+  margin-bottom: 280px;
+}
+
+.navigation-link-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cookbook-btn {
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-quicksand);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--color-text-cremy);
+  padding: 16px 26px 16px 26px;
+  transition:
+    background-color 300ms ease-out,
+    transform 300ms ease-out;
+  &:hover {
+    background-color: rgba(250, 224, 198, 0.2);
+  }
+}
+
+.hero-image {
+  display: flex;
+  height: 100vh;
+  object-fit: contain;
+  pointer-events: none;
+}
+.hero-image img {
+  display: block;
+  height: auto;
+  max-height: 100vh;
+}
+
+.hero-right-container {
+  display: flex;
+}
+
+.hero-container-positions {
+  display: flex;
+  max-width: 1920px;
+  align-items: center;
+  justify-content: center;
+}

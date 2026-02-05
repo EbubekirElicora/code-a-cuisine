@@ -1,0 +1,88 @@
+<section class="results-page">
+  <main>
+    <div class="header-container">
+    <img
+      class="header-logo"
+      src="assets/img/icons/menuBar_cremy.svg"
+      alt="Code à Cuisine"
+      [routerLink]="['/hero']"
+    />
+    </div>
+    <div class="results-inner">
+      <div class="results-hero">
+        <div class="hero-text">
+          <h1>Generated recipes</h1>
+          <div class="hero-image-mobile d-none">
+          <img
+            src="assets/img/images/resultsImage.png"
+            alt="AI serving a dish"
+          />
+        </div>
+          <p class="hero-subtitle">
+            We took what you have and let our AI do the thinking. Here are
+            {{ recipes.length }} easy recipes you can make right now!
+          </p>
+          <div class="hero-tags">
+            <span class="hero-tag" *ngIf="primaryCuisine">
+              {{ primaryCuisine }}
+            </span>
+            <span class="hero-tag" *ngIf="primaryCookingTime">
+              {{ primaryCookingTime }}
+            </span>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img
+            src="assets/img/images/resultsImage.png"
+            alt="AI serving a dish"
+          />
+        </div>
+      </div>
+      <div class="results-cards">
+        <article
+          class="result-card"
+          *ngFor="let r of recipes; let i = index; trackBy: trackById"
+        >
+          <header class="card-header">
+            <div class="card-icon-row">
+              <img
+                class="card-icon"
+                src="assets/img/icons/icon.svg"
+                alt="Recipe icon"
+              />
+              <span class="card-recipe-label">Recipe {{ i + 1 }}</span>
+            </div>
+          </header>
+          <h3 class="card-title">
+            {{ r.title }}
+          </h3>
+          <div class="card-meta">
+            <img
+              src="assets/img/icons/timer_green.svg"
+              alt="Cooking time"
+              class="card-meta-icon"
+            />
+            <span>Cooking time: {{ r.cookingTime }}</span>
+          </div>
+          <button
+            class="card-view-btn"
+            [routerLink]="['/recipe', r.id]"
+            [queryParams]="{ from: 'results' }"
+            type="button"
+          >
+            View
+          </button>
+        </article>
+      </div>
+      <div class="results-footer">
+        <button class="results-link-btn" routerLink="/generate" type="button">
+          Generate new recipe
+          <img
+            src="assets/img/icons/arrow_right_cremy.svg"
+            alt="Generate another"
+          />
+        </button>
+      </div>
+    </div>
+  </main>
+</section>

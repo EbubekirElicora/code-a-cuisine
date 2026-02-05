@@ -1,0 +1,134 @@
+<section class="cuisine-page">
+  <main>
+    <header class="cuisine-header">
+      <div class="header-container">
+        <img
+          class="header-logo"
+          src="assets/img/icons/menuBar_green.svg"
+          alt="Code à Cuisine"
+          [routerLink]="['/hero']"
+        />
+        <button class="back-link" type="button" routerLink="/cookbook">
+          <img src="assets/img/icons/arrow_left_green.svg" alt="Back" />
+          <span>{{ backLabel }}</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="cuisine-main">
+      <p *ngIf="loading">Loading recipes…</p>
+      <p *ngIf="error" class="error">{{ error }}</p>
+      <div class="cuisine-hero-wrapper">
+        <div class="cuisine-hero">
+          <div>
+            <div class="generate-btn-container">
+              <button class="green-btn" routerLink="/generate">
+                Generate a recipe
+              </button>
+            </div>
+            <div class="cuisine-hero-content">
+              <img
+                class="cuisine-hero-img"
+                [src]="heroImageSrc"
+                [alt]="cuisineLabel"
+              />
+              <h1>
+                {{ cuisineLabel }}
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        <div class="main-content">
+          <ol class="recipe-list" *ngIf="!loading && !error">
+            <li
+              class="recipe-row"
+              *ngFor="
+                let r of paginatedRecipes;
+                let i = index;
+                trackBy: trackById
+              "
+            >
+              <div class="recipe-number">
+                <span> {{ (currentPage - 1) * pageSize + i + 1 }}. </span>
+              </div>
+
+              <div class="recipe-list-container">
+                <div class="recipe-main">
+                  <div class="recipe-time">
+                    <img
+                      src="assets/img/icons/timer_green.svg"
+                      alt="Cooking time"
+                    />
+                    <span>Cooking time: {{ r.cookingTime }}</span>
+                  </div>
+                </div>
+
+                <div class="recipe-meta">
+                  <div class="recipe-title-container">
+                    <a
+                      class="recipe-title-link"
+                      [routerLink]="['/recipe', r.id]"
+                      [queryParams]="{ from: 'cookbook' }"
+                    >
+                      {{ r.title }}
+                    </a>
+                  </div>
+                  <div class="chip-container">
+                  <span class="chip" *ngFor="let tag of r.tags | slice: 0 : 3">
+                    {{ tag }}
+                  </span>
+                  <span class="likes-badge">
+                    <img src="assets/img/icons/like.svg" alt="Likes" />
+                    {{ r.likes }}
+                  </span>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Pagination-Navigator unten -->
+        <div
+          class="pagination"
+          *ngIf="!loading && !error && recipes.length > 0"
+        >
+          <button
+            type="button"
+            class="page-btn"
+            (click)="goToPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+          >
+            &lt;
+          </button>
+
+          <button
+            type="button"
+            class="page-btn"
+            *ngFor="let p of pageNumbers"
+            [class.page-btn--active]="p === currentPage"
+            [disabled]="p === '...'"
+            (click)="onPageClick(p)"
+          >
+            {{ p }}
+          </button>
+
+          <button
+            type="button"
+            class="page-btn"
+            (click)="goToPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+          >
+            &gt;
+          </button>
+        </div>
+        <div class="generate-btn-container-mobile d-none">
+          <button class="green-btn" routerLink="/generate">
+            Generate a recipe
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+</section>

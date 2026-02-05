@@ -1,0 +1,95 @@
+@media (max-width: 1300px) {
+  .navigation-link-container {
+    align-items: flex-start;
+    gap: 32px;
+    flex-direction: column;
+  }
+  
+  .hero-inner {
+    padding: 0px 0px 0px 16px;
+  }
+
+  .hero h1 {
+    font-size: 64px;
+    line-height: 72px;
+    margin-bottom: 40px;
+  }
+
+  .hero h2 {
+    font-size: 24px;
+    line-height: 100%;
+  }
+
+  .hero h3 {
+    padding-left: 16px;
+    line-height: 120%;
+    font-size: 24px;
+  }
+
+  .cookbook-btn {
+    font-size: 18px;
+    line-height: 100%;
+    padding: 16px;
+  }
+
+  .cremy-btn {
+    margin-bottom: 254px;
+  }
+}
+
+@media (max-width: 1025px) {
+  .hero-image {
+    display: none;
+  }
+
+  .hero-image-responsive {
+    display: flex;
+    height: 100vh;
+    object-fit: cover;
+  }
+
+  .cremy-btn {
+    padding: 16px;
+  }
+
+  .hero-inner {
+    padding: 0px 0px 0px 32px;
+  }
+
+  .hero-container-positions {
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 900px) and (max-height: 750px) {
+  .cremy-btn {
+    margin-bottom: 80px;
+  }
+}
+
+@media (max-width: 500px) {
+  .hero-container-positions {
+    justify-content: center;
+  }
+
+  .hero-content {
+    position: absolute;
+  }
+
+  .hero-right-container {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .hero-inner {
+    padding: 0px 0px 0px 16px;
+  }
+}
+
+
+
+@media (max-width: 450px) and (max-height: 950px) {
+  .hero-image-responsive {
+    width: 40%;
+  }
+}

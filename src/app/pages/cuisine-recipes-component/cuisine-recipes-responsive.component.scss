@@ -1,0 +1,154 @@
+@media (max-width: 1200px) {
+  .cuisine-hero-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    padding-inline: 16px;
+  }
+
+  .green-btn {
+    margin-right: 16px;
+  }
+}
+
+@media (max-width: 950px) {
+  .generate-btn-container {
+    display: none;
+  }
+
+  .cuisine-hero-wrapper {
+    margin-top: 238px;
+  }
+
+  .generate-btn-container-mobile {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+
+  .pagination {
+    padding-bottom: 40px;
+    padding-top: 40px;
+  }
+
+  .green-btn {
+    margin-right: 0;
+    margin-bottom: 40px;
+  }
+
+  .cuisine-hero h1 {
+    font-size: 32px;
+  }
+
+  .recipe-list {
+    width: 100%;
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 700px) {
+  .recipe-number {
+    align-items: flex-start;
+  }
+
+  .cuisine-hero h1 {
+    font-size: 24px;
+  }
+
+  .recipe-title-link {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 100%;
+  }
+
+  .recipe-time img {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 650px) {
+  .recipe-row {
+    display: flex;
+    align-items: start;
+    padding: 6px 6px 6px 6px;
+    height: max-content;
+  }
+
+  .green-btn {
+    width: 178px;
+    padding: 16px;
+    line-height: 100%;
+  }
+
+  .recipe-number {
+    justify-content: flex-start;
+    width: auto;
+    height: max-content;
+  }
+
+  .recipe-list-container {
+    gap: 8px;
+    flex-direction: column;
+  }
+  .recipe-meta {
+    gap: 16px;
+    flex-direction: column;
+  }
+
+  .page-btn {
+    font-size: 16px;
+  }
+
+  .page-btn--active {
+    font-size: 17px;
+  }
+
+  .main-content {
+    margin-top: 40px;
+  }
+
+  .recipe-list {
+    row-gap: 32px;
+  }
+
+  .recipe-list .recipe-row:nth-child(even) {
+    background-color: rgba(250, 240, 230, 0.7);
+    border-radius: 16px;
+  }
+
+  .recipe-list .recipe-row:nth-child(even):hover {
+    box-shadow: inset 160px 160px 5px 0px rgba(0, 0, 0, 0.03);
+  }
+
+  .recipe-list .recipe-row:hover {
+    background-color: rgba(250, 240, 230, 0.7);
+    border-radius: 16px;
+    transform: none;
+  }
+}
+
+@media (max-width: 450px) {
+  .cuisine-hero h1 {
+    font-size: 18px;
+  }
+
+  .back-link span {
+    display: none;
+  }
+
+  .chip-container {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .header-container {
+    gap: 16px;
+  }
+
+  .cuisine-hero-wrapper {
+    margin-top: 120px;
+  }
+}

@@ -1,0 +1,324 @@
+<section class="recipe-page" *ngIf="recipe as r; else notFound">
+  <main>
+    <div class="recipe-header">
+      <img
+        class="recipe-logo header-logo"
+        src="assets/img/icons/menuBar_green.svg"
+        alt="Code à Cuisine"
+        [routerLink]="['/hero']"
+      />
+      <button class="back-link" type="button" [routerLink]="backLink">
+        <img src="assets/img/icons/arrow_left_green.svg" alt="Back" />
+        <span>{{ backLabel }}</span>
+      </button>
+    </div>
+    <div class="recipe-inner">
+      <article class="recipe-card">
+        <header class="recipe-card-header">
+          <div class="recipe-header-left">
+            <div class="header-top-row">
+              <div class="header-time">
+                <img
+                  src="assets/img/icons/timer_green.svg"
+                  alt="Cooking time"
+                />
+                <span>Cooking time: {{ r.cookingTime }}</span>
+              </div>
+              <div>
+                <h1 class="recipe-title">{{ r.title }}</h1>
+              </div>
+              <div class="header-chefs">
+                <span class="header-chefs-label">
+                  Cooking person: {{ helpersCount }}
+                </span>
+                <div class="header-chefs-icons">
+                  <ng-container *ngFor="let c of chefsArray">
+                    <div class="header-chefs-pos" [ngClass]="chefBgClass(c)">
+                      <img [src]="chefIcon(c)" [alt]="'Chef ' + c" />
+                      <span>Chef {{ c }}</span>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="recipe-header-right">
+            <div class="recipe-tag-row">
+              <span class="chip">{{ effectiveServings }} Port.</span>
+              <span
+                class="chip"
+                *ngFor="let tag of visibleTags; trackBy: trackByIndex"
+              >
+                {{ tag }}
+              </span>
+              <button
+                type="button"
+                class="like-badge"
+                (click)="like()"
+                aria-label="Like recipe"
+              >
+                <img src="assets/img/icons/like.svg" alt="Likes" />
+                <span>{{ r.likes }}</span>
+              </button>
+            </div>
+            <section class="nutri-card">
+              <h3 class="nutri-title">Nutritional information</h3>
+              <div
+                class="nutri-grid"
+                *ngIf="nutritionForSelected as n; else noNutrition"
+              >
+                <div class="nutri-row">
+                  <span class="nutri-label">Energy</span>
+                  <span class="nutri-value">{{ n.energyKcal }} kcal</span>
+                </div>
+                <div class="nutri-row">
+                  <span class="nutri-label">Protein</span>
+                  <span class="nutri-value">{{ n.proteinG }}g</span>
+                </div>
+                <div class="nutri-row">
+                  <span class="nutri-label">Fat</span>
+                  <span class="nutri-value">{{ n.fatG }}g</span>
+                </div>
+                <div class="nutri-row">
+                  <span class="nutri-label">Carbs</span>
+                  <span class="nutri-value">{{ n.carbsG }}g</span>
+                </div>
+              </div>
+              <ng-template #noNutrition>
+                <div class="nutri-grid">
+                  <div class="nutri-row">
+                    <span class="nutri-label">Energy</span>
+                    <span class="nutri-value">—</span>
+                  </div>
+                  <div class="nutri-row">
+                    <span class="nutri-label">Protein</span>
+                    <span class="nutri-value">—</span>
+                  </div>
+                  <div class="nutri-row">
+                    <span class="nutri-label">Fat</span>
+                    <span class="nutri-value">—</span>
+                  </div>
+                  <div class="nutri-row">
+                    <span class="nutri-label">Carbs</span>
+                    <span class="nutri-value">—</span>
+                  </div>
+                </div>
+              </ng-template>
+            </section>
+          </div>
+        </header>
+        <section class="ingredients-section">
+          <header class="section-header">
+            <img
+              src="assets/img/images/ingredients.png"
+              alt="ingredients background"
+            />
+            <h2>Ingredients</h2>
+          </header>
+          <div class="mobile-toggle width">
+          <button
+            type="button"
+            class="mobile-toggle padding"
+            (click)="toggleIngredients()"
+            *ngIf="!showIngredients"
+          >
+            <span>Show ingredients</span>
+            <img
+              src="assets/img/icons/arrow_drop_down.svg"
+              alt="Show ingredients"
+            />
+          </button>
+          </div>
+          <div
+            class="ingredients-content"
+            [ngClass]="{ collapsed: !showIngredients }"
+          >
+            <div class="ingredients-column">
+              <h3>Your ingredients</h3>
+              <ul>
+                <li
+                  *ngFor="let ing of r.ingredientsUsed; trackBy: trackByIndex"
+                >
+                  {{ ing }}
+                </li>
+              </ul>
+            </div>
+            <div class="ingredients-column">
+              <h3>Extra ingredients</h3>
+              <ul>
+                <li
+                  *ngFor="let extra of r.missingBasics; trackBy: trackByIndex"
+                >
+                  <ng-container
+                    *ngIf="extra.amount != null && extra.amount > 0"
+                  >
+                    {{ extra.amount }}
+                  </ng-container>
+                  <ng-container *ngIf="extra.unit">
+                    {{ extra.unit }}</ng-container
+                  >
+                  <ng-container
+                    *ngIf="
+                      (extra.amount != null && extra.amount > 0) || extra.unit
+                    "
+                  >
+                    &nbsp;
+                  </ng-container>
+
+                  {{ extra.name }}
+                </li>
+                <li *ngIf="!r.missingBasics.length" class="placeholder">
+                  No extra basics needed.
+                </li>
+              </ul>
+            </div>
+            <div class="mobile-toggle width">
+              <button
+                type="button"
+                class="mobile-toggle padding"
+                (click)="toggleIngredients()"
+                *ngIf="showIngredients"
+              >
+                <span>Hide ingredients</span>
+                <img
+                  src="assets/img/icons/arrow_drop_down_up.svg"
+                  alt="Hide ingredients"
+                />
+              </button>
+            </div>
+          </div>
+        </section>
+        <section class="directions-section">
+          <header class="section-header">
+            <img
+              src="/assets/img/images/directions.png"
+              alt="directions background"
+            />
+            <h2 class="directions-text">Directions</h2>
+          </header>
+          <div class="mobile-toggle width">
+            <button
+              type="button"
+              class="mobile-toggle padding"
+              (click)="toggleDirections()"
+              *ngIf="!showDirections"
+            >
+              <span>Show directions</span>
+              <img
+                src="assets/img/icons/arrow_drop_down.svg"
+                alt="Show directions"
+              />
+            </button>
+          </div>
+          <ol class="steps-list" [ngClass]="{ collapsed: !showDirections }">
+            <li
+              class="step-item"
+              *ngFor="let step of r.steps; let i = index; trackBy: trackByIndex"
+            >
+              <div class="step-header">
+                <div class="step-title-container">
+                  <div class="step-number">{{ i + 1 }}.</div>
+                  <div class="step-title-text-container">
+                    <div class="step-title">
+                      {{ getStepTitle(i, step) }}
+                    </div>
+                  </div>
+                </div>
+                <div class="step-body">
+                  <ng-template #noBody></ng-template>
+                  <div
+                    class="step-chef"
+                    [ngClass]="chefBgClass(stepHelperIndex(i))"
+                  >
+                    <div>
+                      <img
+                        [src]="chefIcon(stepHelperIndex(i))"
+                        [alt]="'Chef ' + stepHelperIndex(i)"
+                      />
+                    </div>
+                    <span>Chef {{ stepHelperIndex(i) }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="step-text" *ngIf="getStepBody(i) as body">
+                {{ body }}
+              </div>
+            </li>
+            <div class="mobile-toggle width">
+            <button
+              type="button"
+              class="mobile-toggle padding"
+              (click)="toggleDirections()"
+              *ngIf="showDirections"
+            >
+              <span>Hide directions</span>
+              <img
+                src="assets/img/icons/arrow_drop_down_up.svg"
+                alt="Hide directions"
+              />
+            </button>
+            </div>
+          </ol>
+        </section>
+        <div class="recipe-like-footer">
+          <div style="display: flex">
+            <span class="recipe-bold-text">
+              Just finished this meal?
+              <p class="recipe-small-text">
+                Give it a heart, so that the others know this is delicious.
+              </p>
+            </span>
+          </div>
+          <button
+            type="button"
+            class="fav-btn"
+            (click)="toggleFavorite()"
+            [class.fav-btn--active]="isFavorite"
+            aria-label="Give recipe a heart"
+          >
+            <img
+              [src]="
+                isFavorite
+                  ? 'assets/img/icons/fav_full_heard_green.svg'
+                  : 'assets/img/icons/fav_heard_green.svg'
+              "
+              [alt]="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+            />
+          </button>
+        </div>
+      </article>
+      <footer class="recipe-footer">
+        <div class="footer-left">
+          <p>Find inspiration for your next culinary adventure!</p>
+          <button
+            type="button"
+            class="green-btn footer-cookbook-btn"
+            routerLink="/cookbook"
+          >
+            Cookbook
+          </button>
+        </div>
+      </footer>
+      <div class="generate-btn-container">
+        <button type="button" class="footer-generate" routerLink="/generate">
+          Generate new recipe
+          <img
+            src="assets/img/icons/arrow_right_green.svg"
+            alt="Generate new recipe"
+          />
+        </button>
+      </div>
+    </div>
+  </main>
+</section>
+<ng-template #notFound>
+  <section class="recipe-page">
+    <div class="recipe-inner">
+      <button class="back-link" type="button" [routerLink]="backLink">
+        <img src="assets/img/icons/arrow_left_green.svg" alt="Back" />
+        <span>{{ backLabel }}</span>
+      </button>
+      <p class="not-found">Recipe not found.</p>
+    </div>
+  </section>
+</ng-template>

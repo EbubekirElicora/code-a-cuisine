@@ -1,0 +1,121 @@
+<section class="cookbook-page">
+  <section class="cookbook-main-size">
+  <header class="cookbook-header">
+    <div class="header-container">
+      <img
+        class="header-logo"
+        src="assets/img/icons/menuBar_green.svg"
+        alt="Code à Cuisine"
+        [routerLink]="['/hero']"
+      />
+      <button class="back-link" type="button" routerLink="/hero">
+        <img src="assets/img/icons/arrow_left_green.svg" alt="Back" />
+        <span>{{ backLabel }}</span>
+      </button>
+    </div>
+  </header>
+  <main>
+    <section class="most-liked">
+      <section class="header-content-left">
+        <div class="cookbook-header-main">
+          <div>
+            <h1>Cookbook</h1>
+            <p class="cookbook-subtitle">
+              From quick bites to gourmet delights, explore them all in our
+              ultimate cookbook and get inspired for your next culinary
+              adventure!
+            </p>
+          </div>
+        </div>
+      </section>
+      <section class="header-content-right">
+        <h2>
+          Most liked recipes
+          <img
+            [src]="
+              mostLiked.length
+                ? 'assets/img/icons/fav_full_heard_green.svg'
+                : 'assets/img/icons/fav_heard_green.svg'
+            "
+            alt="Favorites"
+          />
+        </h2>
+        <ng-container *ngIf="mostLiked.length; else noFavorites">
+          <div
+            #mostLikedScroller
+            class="most-liked-row"
+            (mousedown)="onDragStart($event)"
+            (mousemove)="onDragMove($event)"
+            (mouseup)="onDragEnd()"
+            (mouseleave)="onDragEnd()"
+          >
+            <article
+              class="most-liked-card"
+              *ngFor="let r of mostLiked; trackBy: trackById"
+              (click)="onCardClick($event, r)"
+            >
+              <div class="most-liked-content">
+                <div class="most-liked-time">
+                  <img
+                    src="assets/img/icons/timer_green.svg"
+                    alt="Cooking time"
+                  />
+                  <span>Cooking time: {{ r.cookingTime }}</span>
+                </div>
+                <div class="most-liked-meta">
+                  <span class="likes-badge">
+                    <img src="assets/img/icons/like.svg" alt="Likes" />
+                    {{ r.likes }}
+                  </span>
+                </div>
+              </div>
+              <h3>{{ r.title }}</h3>
+            </article>
+          </div>
+        </ng-container>
+        <ng-template #noFavorites>
+          <p class="no-favs-text">
+            No favorites yet. Give a recipe a heart to save it here.
+          </p>
+        </ng-template>
+      </section>
+    </section>
+
+    <section class="cookbook-grid">
+      <section class="cuisine-section">
+        <div class="cuisine-grid">
+          <button
+            class="cuisine-card"
+            type="button"
+            *ngFor="let card of cuisineCards"
+            [routerLink]="['/cookbook', card.slug]"
+          >
+            <div class="cuisine-card-footer">
+              <h2>
+                {{ card.label }}
+                <span class="emoji">{{ card.emoji }}</span>
+              </h2>
+            </div>
+            <div class="cuisine-card-image-wrapper">
+              <img
+                class="cuisine-image"
+                [src]="card.image"
+                [alt]="card.label"
+              />
+            </div>
+          </button>
+        </div>
+      </section>
+    </section>
+    <div class="footer-generate-container">
+      <button type="button" class="footer-generate" routerLink="/generate">
+        Generate new recipe
+        <img
+          src="assets/img/icons/arrow_right_green.svg"
+          alt="Generate new recipe"
+        />
+      </button>
+    </div>
+  </main>
+  </section>
+</section>
