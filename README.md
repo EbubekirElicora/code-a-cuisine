@@ -1,112 +1,103 @@
-Code-a-Cuisine 🍽️
+# Code-a-Cuisine 🍽️
+## AI-assisted recipe generation with robust validation and persistence
 
-AI-assisted recipe generation with robust validation and persistence
+---
 
-Overview
+## Overview
 
 Code-a-Cuisine is a full-stack web application that generates cooking recipes based on user-provided ingredients and preferences.
-The project combines an Angular frontend with an n8n-based backend orchestration layer, Firebase/Firestore for persistence, and Large Language Models (LLMs) for recipe generation.
 
-The primary goal of the project is robustness and reliability when working with AI-generated data.
+The project combines:
+- Angular frontend
+- n8n backend orchestration
+- Firebase Firestore for persistence
+- Large Language Models (LLMs) for recipe generation
 
-Architecture
-Frontend
+The main focus of the project is robustness, validation, and predictable behavior when working with AI-generated data.
 
-Angular (Standalone Components)
+---
 
-Clear separation of concerns:
+## Architecture
 
-core/recipes: domain models, mappers, utilities
+### Frontend
+- Angular (Standalone Components)
+- Clear separation of concerns:
+  - `core/recipes` – domain models, mappers, utilities
+  - `services` – API access and application state
+- No business logic inside UI components
+- Defensive rendering and error handling
 
-services: API access and application state
+### Backend
+- n8n as orchestration and validation layer
+- Firebase Firestore as persistent data store
+- HTTP Webhooks as a clean API boundary
 
-No business logic in components
+### AI Integration
+- LLMs are used only for generating recipe proposals
+- All AI output is treated as untrusted input
+- No AI-generated data is stored or displayed without validation
 
-Defensive rendering and error handling
+---
 
-Backend
+## Data Flow – Recipe Generation
 
-n8n as orchestration and validation layer
+1. User selects ingredients, servings, and preferences
+2. Frontend sends a request to an n8n webhook
+3. n8n triggers an LLM prompt
+4. The LLM response is:
+   - parsed
+   - validated
+   - classified as valid, soft-fail, or hard-fail
+5. Based on the result:
+   - Valid → stored immediately
+   - Soft-fail → automatically repaired → stored
+   - Hard-fail → regenerated or rejected
+6. Only validated data reaches Firestore and the frontend
 
-Firebase Firestore as the persistent data store
+---
 
-HTTP Webhooks as a clean API boundary
+## Validation and Error Handling
 
-AI Integration
+- Strict schema validation of all generated data
+- Automatic repair for recoverable AI errors
+- Clear separation between recoverable and non-recoverable failures
+- No persistence of invalid or incomplete data
+- Graceful frontend degradation on backend errors
 
-LLMs are used exclusively for generating recipe proposals.
-All AI output is treated as untrusted input and is strictly validated before use.
+---
 
-Data Flow (Recipe Generation)
+## API Endpoints
 
-User selects ingredients, servings, and preferences
+| Endpoint | Method | Description |
+|--------|--------|-------------|
+| `/webhook/recipes` | GET | Retrieve stored recipes |
+| `/webhook/generate-recipes` | POST | Generate new recipes |
+| `/webhook/like-recipe` | POST | Increment recipe likes |
 
-Frontend sends a request to the n8n webhook
+---
 
-n8n triggers an LLM prompt
+## Development Principles
 
-The LLM response is:
+- No hard-coded business data
+- Configuration over assumptions
+- Validation before persistence
+- Explicit and traceable data flow
+- Predictable behavior under failure conditions
 
-Parsed
+---
 
-Validated
+## Why n8n?
 
-Categorized as valid, soft-fail, or hard-fail
+n8n is intentionally used instead of a traditional backend to:
+- Visualize complex AI workflows
+- Centralize validation and repair logic
+- Reduce coupling between frontend and AI logic
+- Enable rapid iteration without compromising stability
 
-Depending on the result:
+---
 
-Valid data is stored directly
-
-Soft-fail data is automatically repaired
-
-Hard-fail data is regenerated or rejected
-
-Only validated recipes are persisted and returned to the frontend
-
-This approach ensures that malformed AI responses never reach the UI or the database.
-
-Validation & Error Handling
-
-Strict schema validation of all generated data
-
-Automatic repair for recoverable AI errors
-
-Clear separation between recoverable and non-recoverable failures
-
-No persistence of invalid or incomplete data
-
-Graceful frontend degradation in case of backend errors
-
-API Endpoints (via n8n)
-Endpoint	Method	Description
-/webhook/recipes	GET	Retrieve stored recipes
-/webhook/generate-recipes	POST	Generate new recipes
-/webhook/like-recipe	POST	Increment recipe likes
-Development Principles
-
-No hard-coded business data
-
-Configuration over assumptions
-
-Validation before persistence
-
-Explicit data flow
-
-Predictable behavior under failure conditions
-
-Why n8n?
-
-n8n is used intentionally as a backend orchestration layer to:
-
-Visualize and control complex AI workflows
-
-Centralize validation and repair logic
-
-Reduce coupling between frontend and AI logic
-
-Enable rapid iteration without compromising stability
-
-Disclaimer
+## Disclaimer
 
 AI-generated content is inherently probabilistic.
+
 This project demonstrates a defensive and responsible approach to integrating AI systems into production-grade applications.
