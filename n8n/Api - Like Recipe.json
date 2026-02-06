@@ -1,0 +1,289 @@
+{
+  "name": "Api - Like Recipe",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "like-recipe",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "06223ce8-b23d-4184-a9f8-503811ddd697",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        256,
+        -80
+      ],
+      "webhookId": "b0e7a503-1c33-40a9-8c2c-3cdc2e9c1651",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": 400,
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "Ungültige Eingabe: ingredients muss Liste sein, servings 1–12",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "6bfb0e9f-6f08-42a7-98db-4c282925f274",
+      "name": "Edit FieldsError"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "82a0f99d-ac03-441c-baf8-4b0e2f392304",
+              "name": "=id",
+              "value": "={{$node[\"Webhook\"].json.body.id}}",
+              "type": "string"
+            },
+            {
+              "id": "6b146ea9-345b-4b22-8f51-584500ae5271",
+              "name": "=likes",
+              "value": "={{ \n  Math.max(\n    0,\n    Number($json.likes ?? 0) +\n    Number($node[\"Webhook\"].json.body.delta ?? 1))}}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        -224
+      ],
+      "id": "027b8eed-ac74-4b64-bebe-107ec71e39be",
+      "name": "PrepareDoc"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "saved",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "1dfacbba-2232-4791-bcf4-ad2cd89250f4",
+              "name": "id",
+              "value": "={{ $node[\"Webhook\"].json.body.id }}",
+              "type": "string"
+            },
+            {
+              "id": "e44d72f5-23fd-47d2-b35d-adead595af0b",
+              "name": "likes",
+              "value": "={{$json.likes}}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        -224
+      ],
+      "id": "1330879f-37ca-46d0-9667-7106cfe29323",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": "code-a-cuisine-ba168",
+        "collection": "recipes",
+        "documentId": "={{ $node[\"Webhook\"].json.body.id }}"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        -224
+      ],
+      "id": "d5aa187e-4afe-4f56-aca0-12685e9ac0c2",
+      "name": "Get a document",
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "upsert",
+        "projectId": "=code-a-cuisine-ba168",
+        "collection": "recipes",
+        "updateKey": "=id",
+        "columns": "likes"
+      },
+      "name": "Create or update a document",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "position": [
+        1264,
+        -224
+      ],
+      "typeVersion": 1,
+      "id": "fad8e97a-edd2-42b7-8bc5-46c87899d451",
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6376640c-ec66-4f4a-8e0b-87d8b8b6ce6b",
+              "leftValue": "={{ $json.body.id }}",
+              "rightValue": "undefined",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "444d7bf6-9d7f-4b5e-8bda-d07af9f0a767",
+              "leftValue": "={{ $json.body.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        512,
+        -80
+      ],
+      "id": "2f284b34-bb09-4f32-a462-8850ff4843be",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PrepareDoc": {
+      "main": [
+        [
+          {
+            "node": "Create or update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document": {
+      "main": [
+        [
+          {
+            "node": "PrepareDoc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a document": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get a document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit FieldsError",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2aee6ab7-f033-40e6-945c-be48a8190c81",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"
+  },
+  "id": "w_AwECyZCoatyPuRSrpwP",
+  "tags": []
+}

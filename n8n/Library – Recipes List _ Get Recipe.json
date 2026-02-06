@@ -1,0 +1,167 @@
+{
+  "name": "Library – Recipes List / Get Recipe",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "recipes",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "446531ba-71a8-488e-b967-a845c47c0bf4",
+      "name": "Webhook",
+      "webhookId": "3e38d144-dae7-439e-aa93-316d5cbb0a05"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "getAll",
+        "projectId": "=code-a-cuisine-ba168",
+        "database": "=(default)",
+        "collection": "recipes"
+      },
+      "name": "Get many documents",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "position": [
+        208,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "bc329aef-067e-4d33-bede-f360ae23b675",
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ff8054ac-3cd8-40a5-afd8-12e8f8dede35",
+              "name": "status",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "170df21b-fc5e-42ef-bf4e-d13ff1506451",
+              "name": "recipes",
+              "value": "={{ \n  $input.all().map(item => {\n    const json = item.json;\n\n    const timeCategory = json.timeCategory ?? json.cookingTime ?? null;\n\n    return {\n      id: json._id ?? json.id,\n      title: json.title ?? 'Generated',\n      ingredientsUsed: json.ingredientsUsed ?? [],\n      servings: Number(json.servings ?? 2),\n      createdAt: json.createdAt ?? null,\n      likes: Number(json.likes ?? 0),\n      tags: json.tags ?? [],\n      missingBasics: json.missingBasics ?? [],\n      steps: json.steps ?? [],\n      stepTitles: json.stepTitles ?? [],\n      stepBodies: json.stepBodies ?? [],\n      energyKcal: json.energyKcal ?? 630,\n      proteinG: json.proteinG ?? 18,\n      fatG: json.fatG ?? 24,\n      carbsG: json.carbsG ?? 58,\n      helperTodos: json.helperTodos ?? [],\n      timeCategory,\n      cuisine: json.cuisine ?? null,\n      diet: json.diet ?? null,\n      helpersCount: json.helpersCount ?? null,\n    };\n  })\n  .sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0))\n}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        0
+      ],
+      "id": "eb2dea21-6d35-40ac-81a0-80d856897147",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "likes",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "7d295120-1f7c-4dfa-a2ae-21fee3668487",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $node[\"Webhook\"].json.query ?? {};\nconst limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)));\nconst offset = Math.max(0, Number(q.offset ?? 0));\nconst all = $input.all();\nconst page = all.slice(offset, offset + limit);\nreturn page;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "40f7e204-f980-49b5-a3b3-0d9ca3df9e37",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get many documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many documents": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5c39a143-e977-4dd6-9152-42451c732dac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"
+  },
+  "id": "VlpMsrlFCCUa9pimqihks",
+  "tags": []
+}
