@@ -1,3 +1,26 @@
+@media (max-width: 1960px) {
+  .results-header {
+    position: static;
+    display: flex;
+  }
+
+  .header-container {
+    left: 68px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .results-page {
+    display: block;
+  }
+
+  .main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 1400px) {
   .results-cards {
     flex-direction: column;

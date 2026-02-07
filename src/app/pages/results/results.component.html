@@ -1,23 +1,25 @@
 <section class="results-page">
   <main>
-    <div class="header-container">
-    <img
-      class="header-logo"
-      src="assets/img/icons/menuBar_cremy.svg"
-      alt="Code à Cuisine"
-      [routerLink]="['/hero']"
-    />
-    </div>
+    <header class="results-header">
+      <div class="header-container">
+        <img
+          class="header-logo"
+          src="assets/img/icons/menuBar_cremy.svg"
+          alt="Code à Cuisine"
+          [routerLink]="['/']"
+        />
+      </div>
+    </header>
     <div class="results-inner">
       <div class="results-hero">
         <div class="hero-text">
           <h1>Generated recipes</h1>
           <div class="hero-image-mobile d-none">
-          <img
-            src="assets/img/images/resultsImage.png"
-            alt="AI serving a dish"
-          />
-        </div>
+            <img
+              src="assets/img/images/resultsImage.png"
+              alt="AI serving a dish"
+            />
+          </div>
           <p class="hero-subtitle">
             We took what you have and let our AI do the thinking. Here are
             {{ recipes.length }} easy recipes you can make right now!

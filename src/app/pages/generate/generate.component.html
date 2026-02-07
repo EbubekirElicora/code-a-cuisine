@@ -1,163 +1,167 @@
 <section class="generate">
-  <div class="header-container">
-    <img
-      class="header-logo"
-      src="assets/img/icons/menuBar_green.svg"
-      alt="Code à Cuisine"
-      [routerLink]="['/hero']"
-    />
-  </div>
-  <main>
-    <div class="generate-inner">
-      <h1>Generate recipe</h1>
-      <h3>
-        Got random stuff in your kitchen? Pop it in—we’ve got the perfect recipe
-        waiting.
-      </h3>
-      <div class="cards-row">
-        <div class="ingredients-input-card">
-          <div class="input-add">
-            <label>Ingredient</label>
-            <input
-              [(ngModel)]="ingredientInput"
-              (keydown.enter)="addIngredient()"
-            />
-          </div>
-          <div class="serving-size-container">
-            <label>Serving size</label>
-            <div class="serving-row">
+  <div class="generate-container-positions">
+    <header class="generate-header">
+      <div class="header-container">
+        <img
+          class="header-logo"
+          src="assets/img/icons/menuBar_green.svg"
+          alt="Code à Cuisine"
+          [routerLink]="['/']"
+        />
+      </div>
+    </header>
+    <main>
+      <div class="generate-inner">
+        <h1>Generate recipe</h1>
+        <h3>
+          Got random stuff in your kitchen? Pop it in—we’ve got the perfect
+          recipe waiting.
+        </h3>
+        <div class="cards-row">
+          <div class="ingredients-input-card">
+            <div class="input-add">
+              <label>Ingredient</label>
               <input
-                type="number"
-                [(ngModel)]="amountInput"
-                min="1"
-                class="amount-input"
+                [(ngModel)]="ingredientInput"
+                (keydown.enter)="addIngredient()"
               />
-              <div
-                class="unit-dropdown"
-                [class.open]="unitDropdownOpen"
-                (click)="toggleUnitDropdown($event)"
-              >
-                <span>{{ unitInput }}</span>
-                <img
-                  src="assets/img/icons/arrow_drop_down.svg"
-                  alt="open unit menu"
-                  class="unit-arrow"
+            </div>
+            <div class="serving-size-container">
+              <label>Serving size</label>
+              <div class="serving-row">
+                <input
+                  type="number"
+                  [(ngModel)]="amountInput"
+                  min="1"
+                  class="amount-input"
                 />
-                <ul class="unit-menu" *ngIf="unitDropdownOpen">
-                  <li *ngFor="let u of units" (click)="selectUnit(u, $event)">
-                    {{ u }}
-                  </li>
-                </ul>
-              </div>
-              <div class="img-add-container">
-                <img
-                  class="img-add"
-                  (click)="addIngredient()"
-                  src="assets/img/icons/add_to.svg"
-                  alt="Add ingredient"
-                />
+                <div
+                  class="unit-dropdown"
+                  [class.open]="unitDropdownOpen"
+                  (click)="toggleUnitDropdown($event)"
+                >
+                  <span>{{ unitInput }}</span>
+                  <img
+                    src="assets/img/icons/arrow_drop_down.svg"
+                    alt="open unit menu"
+                    class="unit-arrow"
+                  />
+                  <ul class="unit-menu" *ngIf="unitDropdownOpen">
+                    <li *ngFor="let u of units" (click)="selectUnit(u, $event)">
+                      {{ u }}
+                    </li>
+                  </ul>
+                </div>
+                <div class="img-add-container">
+                  <img
+                    class="img-add"
+                    (click)="addIngredient()"
+                    src="assets/img/icons/add_to.svg"
+                    alt="Add ingredient"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="list-card" [ngClass]="listCardSizeClass">
-          <div class="list-label">
-            <label>List of your Ingredients</label>
-            <ul class="ingredient-list">
-              <li
-                *ngFor="let ing of ingredients; let i = index"
-                class="ingredient-row"
-                [class.is-editing]="editingIndex === i"
-                [class.row-unit-open]="
-                  editingIndex === i && editUnitDropdownOpen
-                "
-              >
-                <div class="ingredient-main">
-                  <span class="bullet">•</span>
-                  <ng-container *ngIf="editingIndex !== i; else editRow">
-                    <span class="amount"
-                      >{{ ing.amount }}{{ unitShort(ing.unit) }}</span
-                    >
-                    <span class="name">{{ ing.name }}</span>
-                  </ng-container>
-                  <ng-template #editRow>
-                    <div class="edit-inline">
-                      <input
-                        type="number"
-                        min="1"
-                        class="amount-pill"
-                        [(ngModel)]="editAmount"
-                      />
-                      <div
-                        class="unit-dropdown inline"
-                        [class.open]="editUnitDropdownOpen"
-                        (click)="toggleEditUnitDropdown($event)"
+          <div class="list-card" [ngClass]="listCardSizeClass">
+            <div class="list-label">
+              <label>List of your Ingredients</label>
+              <ul class="ingredient-list">
+                <li
+                  *ngFor="let ing of ingredients; let i = index"
+                  class="ingredient-row"
+                  [class.is-editing]="editingIndex === i"
+                  [class.row-unit-open]="
+                    editingIndex === i && editUnitDropdownOpen
+                  "
+                >
+                  <div class="ingredient-main">
+                    <span class="bullet">•</span>
+                    <ng-container *ngIf="editingIndex !== i; else editRow">
+                      <span class="amount"
+                        >{{ ing.amount }}{{ unitShort(ing.unit) }}</span
                       >
-                        <span>{{ editUnit }}</span>
-                        <img
-                          src="assets/img/icons/arrow_drop_down.svg"
-                          alt="open unit menu"
-                          class="unit-arrow-list"
+                      <span class="name">{{ ing.name }}</span>
+                    </ng-container>
+                    <ng-template #editRow>
+                      <div class="edit-inline">
+                        <input
+                          type="number"
+                          min="1"
+                          class="amount-pill"
+                          [(ngModel)]="editAmount"
                         />
-                        <ul class="unit-menu" *ngIf="editUnitDropdownOpen">
-                          <li
-                            *ngFor="let u of units"
-                            (click)="selectEditUnit(u, $event)"
-                          >
-                            {{ u }}
-                          </li>
-                        </ul>
+                        <div
+                          class="unit-dropdown inline"
+                          [class.open]="editUnitDropdownOpen"
+                          (click)="toggleEditUnitDropdown($event)"
+                        >
+                          <span>{{ editUnit }}</span>
+                          <img
+                            src="assets/img/icons/arrow_drop_down.svg"
+                            alt="open unit menu"
+                            class="unit-arrow-list"
+                          />
+                          <ul class="unit-menu" *ngIf="editUnitDropdownOpen">
+                            <li
+                              *ngFor="let u of units"
+                              (click)="selectEditUnit(u, $event)"
+                            >
+                              {{ u }}
+                            </li>
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                    <span class="name">{{ ing.name }}</span>
-                  </ng-template>
-                </div>
-                <div class="ingredient-actions">
-                  <button
-                    type="button"
-                    class="icon-button"
-                    *ngIf="editingIndex !== i; else confirmBtn"
-                    (click)="startEdit(i)"
-                  >
-                    <img src="assets/img/icons/edit.svg" alt="edit" />
-                  </button>
-                  <ng-template #confirmBtn>
+                      <span class="name">{{ ing.name }}</span>
+                    </ng-template>
+                  </div>
+                  <div class="ingredient-actions">
                     <button
                       type="button"
-                      class="icon-button-confirm"
-                      (click)="confirmEdit(i)"
-                      (mouseenter)="hoveredConfirmIndex = i"
-                      (mouseleave)="hoveredConfirmIndex = null"
+                      class="icon-button"
+                      *ngIf="editingIndex !== i; else confirmBtn"
+                      (click)="startEdit(i)"
                     >
-                      <img
-                        [src]="
-                          hoveredConfirmIndex === i
-                            ? 'assets/img/icons/check_hover.svg'
-                            : 'assets/img/icons/check.svg'
-                        "
-                        alt="confirm"
-                      />
+                      <img src="assets/img/icons/edit.svg" alt="edit" />
                     </button>
-                  </ng-template>
-                  <button
-                    type="button"
-                    class="icon-button"
-                    (click)="removeIngredient(i)"
-                  >
-                    <img src="assets/img/icons/delete.svg" alt="delete" />
-                  </button>
-                </div>
-              </li>
-            </ul>
+                    <ng-template #confirmBtn>
+                      <button
+                        type="button"
+                        class="icon-button-confirm"
+                        (click)="confirmEdit(i)"
+                        (mouseenter)="hoveredConfirmIndex = i"
+                        (mouseleave)="hoveredConfirmIndex = null"
+                      >
+                        <img
+                          [src]="
+                            hoveredConfirmIndex === i
+                              ? 'assets/img/icons/check_hover.svg'
+                              : 'assets/img/icons/check.svg'
+                          "
+                          alt="confirm"
+                        />
+                      </button>
+                    </ng-template>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      (click)="removeIngredient(i)"
+                    >
+                      <img src="assets/img/icons/delete.svg" alt="delete" />
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
+        <div class="actions-row" *ngIf="ingredients.length > 0">
+          <button class="green-btn" (click)="submit()" [disabled]="loading">
+            {{ loading ? "Generating..." : "Next step" }}
+          </button>
+        </div>
+        <p *ngIf="errorMsg" class="error-text">{{ errorMsg }}</p>
       </div>
-      <div class="actions-row" *ngIf="ingredients.length > 0">
-        <button class="green-btn" (click)="submit()" [disabled]="loading">
-          {{ loading ? "Generating..." : "Next step" }}
-        </button>
-      </div>
-      <p *ngIf="errorMsg" class="error-text">{{ errorMsg }}</p>
-    </div>
-  </main>
+    </main>
+  </div>
 </section>

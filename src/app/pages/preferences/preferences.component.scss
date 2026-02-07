@@ -7,17 +7,25 @@
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  max-width: 1920px;
 }
 
 .pref-header {
   position: absolute;
+}
+
+.header-container {
+  position: absolute;
   top: 40px;
-  left: 68px;
+  left: 0;
   display: flex;
   align-items: center;
   flex-direction: column;
   gap: 32px;
+}
+
+.pref-container-positions {
+  display: flex;
+  max-width: 1920px;
 }
 
 .back-btn {

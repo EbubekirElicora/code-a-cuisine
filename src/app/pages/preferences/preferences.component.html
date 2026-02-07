@@ -1,233 +1,238 @@
 <section class="preferences">
-  <header class="pref-header">
-    <img
-      class="header-logo"
-      src="assets/img/icons/menuBar_green.svg"
-      alt="Code à Cuisine"
-      [routerLink]="['/hero']"
-    />
-    <button class="back-btn" routerLink="/generate" type="button">
-      <img
-        src="assets/img/icons/arrow_left_green.svg"
-        alt="Back to ingredients"
-      />
-      <span>Ingredients</span>
-    </button>
-  </header>
-
-  <div class="preferences-inner">
-    <div class="mobile-div">
-      <h1>Choose your preferences</h1>
-      <div class="pref-top-row">
-        <div class="counter-block">
-          <p class="counter-label">How many portions you need?</p>
-          <div class="counter-row">
-            <button
-              type="button"
-              class="counter-btn"
-              (click)="changeServings(-1)"
-              [disabled]="flow.servings <= 1 || loading"
-            >
-              <img src="assets/img/icons/minus.svg" alt="minus" />
-            </button>
-            <div class="counter-value-pill">
-              <span>{{ flow.servings }}</span>
+  <div class="pref-container-positions">
+    <header class="pref-header">
+      <div class="header-container">
+        <img
+          class="header-logo"
+          src="assets/img/icons/menuBar_green.svg"
+          alt="Code à Cuisine"
+          [routerLink]="['/']"
+        />
+        <button class="back-btn" routerLink="/generate" type="button">
+          <img
+            src="assets/img/icons/arrow_left_green.svg"
+            alt="Back to ingredients"
+          />
+          <span>Ingredients</span>
+        </button>
+      </div>
+    </header>
+    <div class="preferences-inner">
+      <div class="mobile-div">
+        <h1>Choose your preferences</h1>
+        <div class="pref-top-row">
+          <div class="counter-block">
+            <p class="counter-label">How many portions you need?</p>
+            <div class="counter-row">
+              <button
+                type="button"
+                class="counter-btn"
+                (click)="changeServings(-1)"
+                [disabled]="flow.servings <= 1 || loading"
+              >
+                <img src="assets/img/icons/minus.svg" alt="minus" />
+              </button>
+              <div class="counter-value-pill">
+                <span>{{ flow.servings }}</span>
+              </div>
+              <span class="counter-unit">Portions</span>
+              <button
+                type="button"
+                class="counter-btn"
+                (click)="changeServings(1)"
+                [disabled]="flow.servings >= 12 || loading"
+              >
+                <img src="assets/img/icons/plus.svg" alt="plus" />
+              </button>
             </div>
-            <span class="counter-unit">Portions</span>
-            <button
-              type="button"
-              class="counter-btn"
-              (click)="changeServings(1)"
-              [disabled]="flow.servings >= 12 || loading"
-            >
-              <img src="assets/img/icons/plus.svg" alt="plus" />
-            </button>
           </div>
-        </div>
 
-        <div class="counter-block">
-          <p class="counter-label">How many are cooking?</p>
-          <div class="counter-row">
-            <button
-              type="button"
-              class="counter-btn"
-              (click)="changeHelpers(-1)"
-              [disabled]="flow.helpersCount <= 1 || loading"
-            >
-              <img src="assets/img/icons/minus.svg" alt="minus" />
-            </button>
-            <div class="counter-value-pill">
-              <span>{{ flow.helpersCount }}</span>
+          <div class="counter-block">
+            <p class="counter-label">How many are cooking?</p>
+            <div class="counter-row">
+              <button
+                type="button"
+                class="counter-btn"
+                (click)="changeHelpers(-1)"
+                [disabled]="flow.helpersCount <= 1 || loading"
+              >
+                <img src="assets/img/icons/minus.svg" alt="minus" />
+              </button>
+              <div class="counter-value-pill">
+                <span>{{ flow.helpersCount }}</span>
+              </div>
+              <span class="counter-unit">Person</span>
+              <button
+                type="button"
+                class="counter-btn"
+                (click)="changeHelpers(1)"
+                [disabled]="flow.helpersCount >= 3 || loading"
+              >
+                <img src="assets/img/icons/plus.svg" alt="plus" />
+              </button>
             </div>
-            <span class="counter-unit">Person</span>
-            <button
-              type="button"
-              class="counter-btn"
-              (click)="changeHelpers(1)"
-              [disabled]="flow.helpersCount >= 3 || loading"
-            >
-              <img src="assets/img/icons/plus.svg" alt="plus" />
-            </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="pref-card">
-      <!-- Cooking time -->
-      <div class="pref-section">
-        <div class="pref-section-title">
-          <img src="assets/img/icons/timer.svg" alt="Cooking time" />
-          <span>Cooking time:</span>
+      <div class="pref-card">
+        <!-- Cooking time -->
+        <div class="pref-section">
+          <div class="pref-section-title">
+            <img src="assets/img/icons/timer.svg" alt="Cooking time" />
+            <span>Cooking time:</span>
+          </div>
+          <div class="chip-row">
+            <div class="chip-subline-row">
+              <button
+                type="button"
+                class="chip"
+                [class.chip--active]="flow.preferences.cookingTime === 'Quick'"
+                (click)="setCookingTime('Quick')"
+              >
+                Quick
+              </button>
+              <span>up to 20min</span>
+            </div>
+            <div class="chip-subline-row">
+              <button
+                type="button"
+                class="chip"
+                [class.chip--active]="flow.preferences.cookingTime === 'Medium'"
+                (click)="setCookingTime('Medium')"
+              >
+                Medium
+              </button>
+              <span>25–40min</span>
+            </div>
+            <div class="chip-subline-row">
+              <button
+                type="button"
+                class="chip"
+                [class.chip--active]="
+                  flow.preferences.cookingTime === 'Complex'
+                "
+                (click)="setCookingTime('Complex')"
+              >
+                Complex
+              </button>
+              <span>over 45min</span>
+            </div>
+          </div>
         </div>
-        <div class="chip-row">
-          <div class="chip-subline-row">
+
+        <!-- Cuisine -->
+        <div class="pref-section">
+          <div class="pref-section-title">
+            <img src="assets/img/icons/public.svg" alt="Cuisine" />
+            <span>Cuisine</span>
+          </div>
+          <div class="chip-row">
             <button
               type="button"
               class="chip"
-              [class.chip--active]="flow.preferences.cookingTime === 'Quick'"
-              (click)="setCookingTime('Quick')"
+              [class.chip--active]="isCuisineSelected('German')"
+              (click)="setCuisine('German')"
             >
-              Quick
+              German
             </button>
-            <span>up to 20min</span>
-          </div>
-          <div class="chip-subline-row">
             <button
               type="button"
               class="chip"
-              [class.chip--active]="flow.preferences.cookingTime === 'Medium'"
-              (click)="setCookingTime('Medium')"
+              [class.chip--active]="isCuisineSelected('Italian')"
+              (click)="setCuisine('Italian')"
             >
-              Medium
+              Italian
             </button>
-            <span>25–40min</span>
-          </div>
-          <div class="chip-subline-row">
             <button
               type="button"
               class="chip"
-              [class.chip--active]="flow.preferences.cookingTime === 'Complex'"
-              (click)="setCookingTime('Complex')"
+              [class.chip--active]="isCuisineSelected('Indian')"
+              (click)="setCuisine('Indian')"
             >
-              Complex
+              Indian
             </button>
-            <span>over 45min</span>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isCuisineSelected('Japanese')"
+              (click)="setCuisine('Japanese')"
+            >
+              Japanese
+            </button>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isCuisineSelected('Gourmet')"
+              (click)="setCuisine('Gourmet')"
+            >
+              Gourmet
+            </button>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isCuisineSelected('Fusion')"
+              (click)="setCuisine('Fusion')"
+            >
+              Fusion
+            </button>
+          </div>
+        </div>
+
+        <!-- Diet -->
+        <div class="pref-section">
+          <div class="pref-section-title">
+            <img src="assets/img/icons/fork_spoon.svg" alt="Diet preferences" />
+            <span>Diet preferences</span>
+          </div>
+          <div class="chip-row">
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isDietSelected('Vegetarian')"
+              (click)="setDiet('Vegetarian')"
+            >
+              Vegetarian
+            </button>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isDietSelected('Vegan')"
+              (click)="setDiet('Vegan')"
+            >
+              Vegan
+            </button>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isDietSelected('Keto')"
+              (click)="setDiet('Keto')"
+            >
+              Keto
+            </button>
+            <button
+              type="button"
+              class="chip"
+              [class.chip--active]="isDietSelected('None')"
+              (click)="setDiet('None')"
+            >
+              No preferences
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Cuisine -->
-      <div class="pref-section">
-        <div class="pref-section-title">
-          <img src="assets/img/icons/public.svg" alt="Cuisine" />
-          <span>Cuisine</span>
-        </div>
-        <div class="chip-row">
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isCuisineSelected('German')"
-            (click)="setCuisine('German')"
-          >
-            German
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isCuisineSelected('Italian')"
-            (click)="setCuisine('Italian')"
-          >
-            Italian
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isCuisineSelected('Indian')"
-            (click)="setCuisine('Indian')"
-          >
-            Indian
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isCuisineSelected('Japanese')"
-            (click)="setCuisine('Japanese')"
-          >
-            Japanese
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isCuisineSelected('Gourmet')"
-            (click)="setCuisine('Gourmet')"
-          >
-            Gourmet
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isCuisineSelected('Fusion')"
-            (click)="setCuisine('Fusion')"
-          >
-            Fusion
-          </button>
-        </div>
+      <div class="pref-actions">
+        <button class="green-btn" (click)="generate()" [disabled]="loading">
+          {{ loading ? "Generating…" : "Generate a recipe" }}
+        </button>
       </div>
 
-      <!-- Diet -->
-      <div class="pref-section">
-        <div class="pref-section-title">
-          <img src="assets/img/icons/fork_spoon.svg" alt="Diet preferences" />
-          <span>Diet preferences</span>
-        </div>
-        <div class="chip-row">
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isDietSelected('Vegetarian')"
-            (click)="setDiet('Vegetarian')"
-          >
-            Vegetarian
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isDietSelected('Vegan')"
-            (click)="setDiet('Vegan')"
-          >
-            Vegan
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isDietSelected('Keto')"
-            (click)="setDiet('Keto')"
-          >
-            Keto
-          </button>
-          <button
-            type="button"
-            class="chip"
-            [class.chip--active]="isDietSelected('None')"
-            (click)="setDiet('None')"
-          >
-            No preferences
-          </button>
-        </div>
-      </div>
+      <!-- Nur Text-Error, falls mal kein Popup-Typ gesetzt ist -->
+      <p class="pref-error" *ngIf="error && !errorType">{{ error }}</p>
     </div>
-
-    <div class="pref-actions">
-      <button class="green-btn" (click)="generate()" [disabled]="loading">
-        {{ loading ? "Generating…" : "Generate a recipe" }}
-      </button>
-    </div>
-
-    <!-- Nur Text-Error, falls mal kein Popup-Typ gesetzt ist -->
-    <p class="pref-error" *ngIf="error && !errorType">{{ error }}</p>
   </div>
-
+  
   <!-- LOADING OVERLAY -->
   <div class="loading-overlay" *ngIf="loading">
     <div class="loading-overlay-header">
@@ -235,7 +240,7 @@
         class="header-logo"
         src="assets/img/icons/menuBar_cremy.svg"
         alt="Code à Cuisine"
-        [routerLink]="['/hero']"
+        [routerLink]="['/']"
       />
     </div>
     <div class="loading-overlay-inner">

@@ -2,6 +2,9 @@
   background-color: rgba(57, 96, 57, 1);
   min-height: 100vh;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .hero-inner {
@@ -12,10 +15,15 @@
 }
 
 .hero-header {
+   position: absolute;
+}
+
+.header-container {
   position: absolute;
   top: 40px;
   left: 68px;
 }
+
 
 .hero-layout {
   display: flex;
@@ -120,6 +128,4 @@
 .hero-container-positions {
   display: flex;
   max-width: 1920px;
-  align-items: center;
-  justify-content: center;
 }

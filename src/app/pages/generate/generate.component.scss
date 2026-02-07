@@ -2,13 +2,21 @@
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  max-width: 1920px;
+}
+
+.generate-header {
+  position: absolute;
 }
 
 .header-container {
   position: absolute;
   top: 40px;
-  left: 68px;
+  left: 0;
+}
+
+.generate-container-positions {
+  display: flex;
+  max-width: 1920px;
 }
 
 .generate-inner {

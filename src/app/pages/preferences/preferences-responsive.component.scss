@@ -1,3 +1,26 @@
+@media (max-width: 1960px) {
+  .pref-header {
+    position: static;
+    display: flex;
+  }
+
+  .header-container {
+    left: 68px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .preferences {
+    display: block;
+  }
+
+  .pref-container-positions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 750px) {
   .preferences-inner {
     width: 100%;
@@ -62,6 +85,10 @@
 
   .error-message {
     font-size: 16px;
+  }
+
+  .header-container {
+    align-items: flex-start;
   }
 
   .cremy-btn {

@@ -1,10 +1,29 @@
+@media (max-width: 1960px) {
+  .hero-header {
+    position: static;
+    display: flex;
+  }
+}
+
+@media (max-width: 1440px) {
+  .hero {
+    display: block;
+  }
+
+  .hero-container-positions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 1300px) {
   .navigation-link-container {
     align-items: flex-start;
     gap: 32px;
     flex-direction: column;
   }
-  
+
   .hero-inner {
     padding: 0px 0px 0px 16px;
   }
@@ -85,8 +104,6 @@
     padding: 0px 0px 0px 16px;
   }
 }
-
-
 
 @media (max-width: 450px) and (max-height: 950px) {
   .hero-image-responsive {

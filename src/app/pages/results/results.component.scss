@@ -9,13 +9,16 @@
 
 main {
   max-width: 1920px;
-  display: flex;
 }
 
 .header-container {
   position: absolute;
   top: 40px;
-  left: 68px;
+  left: 0;
+}
+
+.results-header {
+  position: absolute;
 }
 
 .results-inner {
