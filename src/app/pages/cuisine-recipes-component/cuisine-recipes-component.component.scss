@@ -7,20 +7,21 @@
 main {
   max-width: 1920px;
   display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .header-container {
   position: absolute;
   top: 40px;
-  left: 68px;
+  left: 0;
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
-/* Backlink wie gehabt */
+.cuisine-header {
+  position: absolute
+}
+
 .back-link {
   border: none;
   background: transparent;
@@ -77,8 +78,6 @@ main {
   margin-left: 8px;
   font-size: 26px;
 }
-
-/* MAIN-LISTE */
 
 .cuisine-main {
   display: flex;
@@ -158,8 +157,6 @@ main {
   }
 }
 
-/* Nummer links (kleiner Kreis) */
-
 .recipe-number {
   display: flex;
   justify-content: flex-end;
@@ -182,8 +179,6 @@ main {
   color: var(--color-text-green) rgba(57, 96, 57, 1);
   background-color: rgb(246, 227, 207);
 }
-
-/* Zeit + Titel */
 
 .recipe-main {
   display: flex;
@@ -209,8 +204,6 @@ main {
   color: var(--color-text-green);
   text-decoration: none;
 }
-
-/* Rechts: Tags + Likes */
 
 .recipe-meta {
   display: flex;

@@ -1,3 +1,26 @@
+@media (max-width: 1960px) {
+  .recipe-header {
+    position: static;
+    display: flex;
+  }
+
+  .header-container {
+    left: 68px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .recipe-page {
+    display: block;
+  }
+
+  .main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 1300px) {
   .hero-container-positions {
     justify-content: center;

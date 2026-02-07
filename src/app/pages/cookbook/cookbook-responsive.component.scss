@@ -1,3 +1,26 @@
+@media (max-width: 1960px) {
+  .cookbook-header {
+    position: static;
+    display: flex;
+  }
+
+  .header-container {
+    left: 68px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .cookbook-page {
+    display: block;
+  }
+
+  .cookbook-main-size {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 1400px) {
   main {
     max-width: clamp(1200px, 92vw, 1330px);

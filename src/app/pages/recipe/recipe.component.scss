@@ -9,13 +9,17 @@ main {
   display: flex;
 }
 
-.recipe-header {
+.header-container {
   position: absolute;
   top: 40px;
-  left: 68px;
+  left: 0;
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+.recipe-header {
+  position: absolute;
 }
 
 .recipe-inner {
@@ -221,7 +225,6 @@ main {
   max-width: 64px;
   min-width: 64px;
 }
-/* INGREDIENTS */
 
 .section-header {
   display: flex;
@@ -274,8 +277,6 @@ main {
 .ingredients-section {
   padding-top: 40px;
 }
-
-/* DIRECTIONS */
 
 .directions-section {
   display: flex;
@@ -380,8 +381,6 @@ main {
   justify-content: center;
 }
 
-/* LIKE-FOOTER */
-
 .recipe-like-footer {
   padding-top: 48px;
   display: flex;
@@ -432,8 +431,6 @@ main {
   transform: scale(1.05);
   filter: brightness(1.2) saturate(1.3);
 }
-
-/* PAGE-FOOTER */
 
 .recipe-footer {
   border-radius: 20px;

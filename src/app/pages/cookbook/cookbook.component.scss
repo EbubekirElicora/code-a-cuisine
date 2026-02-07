@@ -19,10 +19,14 @@ main {
 .header-container {
   position: absolute;
   top: 40px;
-  left: 68px;
+  left: 0;
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+.cookbook-header {
+  position: absolute;
 }
 
 .back-link {
@@ -39,8 +43,6 @@ main {
   color: var(--color-text-light-green);
   padding-inline: 0;
 }
-
-/* HEADER-BLOCK */
 
 .cookbook-header-main {
   display: flex;
@@ -84,7 +86,6 @@ main {
   justify-content: center;
 }
 
-/* MOST LIKED */
 .most-liked {
   padding: 40px 24px;
   border-radius: 20px;
@@ -192,7 +193,6 @@ main {
   gap: 8px;
 }
 
-/* Chips & Likes (wiederverwendbar) */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -216,8 +216,6 @@ main {
   line-height: 100%;
   color: var(--color-text-dark-green);
 }
-
-/* GRID MIT DEN CUISINE-KARTEN */
 
 .cookbook-grid {
   padding-top: 80px;
@@ -314,8 +312,6 @@ main {
   padding-top: 48px;
   padding-bottom: 64px;
 }
-
-/* Allgemeine Error / Loading Texte */
 
 .error {
   color: red;

@@ -1,3 +1,26 @@
+@media (max-width: 1960px) {
+  .cuisine-header {
+    position: static;
+    display: flex;
+  }
+
+  .header-container {
+    left: 68px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .cuisine-page {
+    display: block;
+  }
+
+  .main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 1200px) {
   .cuisine-hero-img {
     width: 100%;

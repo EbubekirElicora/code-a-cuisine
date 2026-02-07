@@ -1,17 +1,19 @@
 <section class="recipe-page" *ngIf="recipe as r; else notFound">
   <main>
-    <div class="recipe-header">
-      <img
-        class="recipe-logo header-logo"
-        src="assets/img/icons/menuBar_green.svg"
-        alt="Code à Cuisine"
-        [routerLink]="['/']"
-      />
-      <button class="back-link" type="button" [routerLink]="backLink">
-        <img src="assets/img/icons/arrow_left_green.svg" alt="Back" />
-        <span>{{ backLabel }}</span>
-      </button>
-    </div>
+    <header class="recipe-header">
+      <div class="header-container">
+        <img
+          class="recipe-logo header-logo"
+          src="assets/img/icons/menuBar_green.svg"
+          alt="Code à Cuisine"
+          [routerLink]="['/']"
+        />
+        <button class="back-link" type="button" [routerLink]="backLink">
+          <img src="assets/img/icons/arrow_left_green.svg" alt="Back" />
+          <span>{{ backLabel }}</span>
+        </button>
+      </div>
+    </header>
     <div class="recipe-inner">
       <article class="recipe-card">
         <header class="recipe-card-header">
@@ -116,18 +118,18 @@
             <h2>Ingredients</h2>
           </header>
           <div class="mobile-toggle width">
-          <button
-            type="button"
-            class="mobile-toggle padding"
-            (click)="toggleIngredients()"
-            *ngIf="!showIngredients"
-          >
-            <span>Show ingredients</span>
-            <img
-              src="assets/img/icons/arrow_drop_down.svg"
-              alt="Show ingredients"
-            />
-          </button>
+            <button
+              type="button"
+              class="mobile-toggle padding"
+              (click)="toggleIngredients()"
+              *ngIf="!showIngredients"
+            >
+              <span>Show ingredients</span>
+              <img
+                src="assets/img/icons/arrow_drop_down.svg"
+                alt="Show ingredients"
+              />
+            </button>
           </div>
           <div
             class="ingredients-content"
@@ -245,18 +247,18 @@
               </div>
             </li>
             <div class="mobile-toggle width">
-            <button
-              type="button"
-              class="mobile-toggle padding"
-              (click)="toggleDirections()"
-              *ngIf="showDirections"
-            >
-              <span>Hide directions</span>
-              <img
-                src="assets/img/icons/arrow_drop_down_up.svg"
-                alt="Hide directions"
-              />
-            </button>
+              <button
+                type="button"
+                class="mobile-toggle padding"
+                (click)="toggleDirections()"
+                *ngIf="showDirections"
+              >
+                <span>Hide directions</span>
+                <img
+                  src="assets/img/icons/arrow_drop_down_up.svg"
+                  alt="Hide directions"
+                />
+              </button>
             </div>
           </ol>
         </section>
