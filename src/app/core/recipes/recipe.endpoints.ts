@@ -4,7 +4,6 @@
   like: 'http://localhost:5678/webhook/like-recipe',
 } as const; */
 
-
 export const API_BASE = 'https://ebubekir-elicora.app.n8n.cloud';
 
 export const RECIPE_ENDPOINTS = {

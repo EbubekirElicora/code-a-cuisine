@@ -5,17 +5,17 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "generate-recipes",
-        "responseMode": "lastNode",
+        "responseMode": "responseNode",
         "options": {}
       },
-      "id": "56d58749-a94e-49d5-90ba-326a4b3524f6",
+      "id": "deb944b7-36a7-42c5-9e36-f84496701ddf",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "position": [
-        -464,
-        912
+        -2256,
+        1072
       ],
-      "webhookId": "89de13d0-c695-461a-b069-e4a32155db32",
+      "webhookId": "854b0221-203a-4204-bd40-15d367830ea5",
       "typeVersion": 2
     },
     {
@@ -56,10 +56,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -304,
-        912
+        -2096,
+        1072
       ],
-      "id": "49adc32d-a173-4108-add6-bfa94c72e38f",
+      "id": "6ad22f3e-d4bf-4667-bce3-382f33336235",
       "name": "If"
     },
     {
@@ -85,10 +85,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1392,
-        928
+        832,
+        1088
       ],
-      "id": "6148cf6c-9296-4c23-98a6-7f8aa678b7fc",
+      "id": "59324abf-e597-4c03-9e19-61aea6e40437",
       "name": "Edit FieldsError"
     },
     {
@@ -102,11 +102,11 @@
       "name": "Create a document",
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "position": [
-        912,
-        240
+        352,
+        400
       ],
       "typeVersion": 1,
-      "id": "8f4a1693-1247-41fe-8983-a2e44220c048",
+      "id": "75bdb9e4-848b-4718-9f2a-11ef788b5cfa",
       "alwaysOutputData": false,
       "credentials": {
         "googleApi": {
@@ -122,10 +122,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -96,
-        624
+        -656,
+        784
       ],
-      "id": "e8981f20-cfbb-48be-83a5-0da18b1ed0b7",
+      "id": "89ef8479-dc26-450a-ae25-987a1a06f8f9",
       "name": "PreparePrompt"
     },
     {
@@ -135,10 +135,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        912,
-        464
+        352,
+        624
       ],
-      "id": "a073da3e-059f-4914-acaa-63bec04316e7",
+      "id": "ab920877-519a-47e6-9fb3-a5d0e9e1f566",
       "name": "RepairPrompt"
     },
     {
@@ -169,10 +169,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1648,
-        464
+        1088,
+        624
       ],
-      "id": "4e627dd6-34d2-4dd6-9ab1-d9ac1ac8a853",
+      "id": "790b234d-08a4-4b31-a56f-aa82820d737a",
       "name": "If2"
     },
     {
@@ -198,10 +198,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1888,
-        688
+        1328,
+        848
       ],
-      "id": "047fbf88-39ff-4545-b5fd-ca20451e9b10",
+      "id": "1a94d478-1197-4d41-84f2-fce0ac75d991",
       "name": "Edit FieldsError1"
     },
     {
@@ -233,10 +233,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1088,
-        240
+        528,
+        400
       ],
-      "id": "21eeafd8-90d7-4965-bdd8-d9569eaa32ea",
+      "id": "c87e3c81-0100-4b28-b1ae-a9a143f70443",
       "name": "Edit Fields Succes"
     },
     {
@@ -268,10 +268,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2080,
-        448
+        1520,
+        608
       ],
-      "id": "7307298e-e40c-491f-bdac-17e2b82720e3",
+      "id": "553fdaf9-3d7c-4158-90c9-b8443f9be252",
       "name": "Edit Fields Success1"
     },
     {
@@ -286,11 +286,11 @@
       "name": "Create a document1",
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "position": [
-        1888,
-        448
+        1328,
+        608
       ],
       "typeVersion": 1,
-      "id": "52687c15-1adb-4336-a007-9c1139684cb2",
+      "id": "e7b1ecc6-9e79-4275-a5dc-983fc696aaee",
       "alwaysOutputData": false,
       "credentials": {
         "googleApi": {
@@ -327,10 +327,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        496,
-        624
+        -64,
+        784
       ],
-      "id": "6465225c-fbc8-4f5c-8a57-1796ce9e443f",
+      "id": "05e0f2f3-92d8-4b90-8ea2-b1e211e7b665",
       "name": "IsSoftFail?"
     },
     {
@@ -361,10 +361,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        704,
-        640
+        144,
+        800
       ],
-      "id": "e00a0906-7249-4c9c-9ec0-79b2c8337746",
+      "id": "cdb8371a-1fea-447f-bb23-233c22cbc724",
       "name": "ShouldRepair?"
     },
     {
@@ -378,11 +378,11 @@
       "name": "Create a document2",
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "position": [
-        1392,
-        784
+        832,
+        944
       ],
       "typeVersion": 1,
-      "id": "9c7bd7d4-a293-4401-9a10-5cd5794ef002",
+      "id": "c139a51a-0a75-4cc6-946b-742f4f5d7c66",
       "alwaysOutputData": false,
       "credentials": {
         "googleApi": {
@@ -419,10 +419,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        864,
-        800
+        304,
+        960
       ],
-      "id": "c8cbcbf6-c0af-46be-a14b-00d9d5cb257b",
+      "id": "75a2badd-5a61-436d-b859-e202abcd4a21",
       "name": "If1"
     },
     {
@@ -432,10 +432,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        336,
-        624
+        -224,
+        784
       ],
-      "id": "1c69f028-d3a5-4aae-8bef-ff6600d1ae98",
+      "id": "285b5bb0-dd33-41b3-b156-0eaa705362e1",
       "name": "ParseAndValidate"
     },
     {
@@ -445,10 +445,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        720,
-        240
+        160,
+        400
       ],
-      "id": "9cd76fbc-def7-4e3a-b0ac-59c0880c1dce",
+      "id": "02542977-0173-449f-9c45-ec7f46052de1",
       "name": "AutoFixSoftIssues"
     },
     {
@@ -458,10 +458,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1424,
-        464
+        864,
+        624
       ],
-      "id": "3f47f962-8653-44ad-91e9-1e82b717f80f",
+      "id": "a7972503-5f41-41a5-8983-9fe28d2afdb0",
       "name": "ParseAndValidate1"
     },
     {
@@ -473,10 +473,10 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        64,
-        624
+        -496,
+        784
       ],
-      "id": "24e2f8b0-6232-4884-9430-c169ac21d597",
+      "id": "9d3e5028-7eb5-472c-9a72-f78ec09718fe",
       "name": "Basic LLM Chain"
     },
     {
@@ -493,10 +493,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        64,
-        800
+        -496,
+        960
       ],
-      "id": "88564239-c8e0-4a1e-901c-6ee741894445",
+      "id": "759aa622-89fd-412b-b777-ebf98dc7c442",
       "name": "OpenAI Chat Model",
       "credentials": {
         "openAiApi": {
@@ -514,10 +514,10 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        1088,
-        464
+        528,
+        624
       ],
-      "id": "2e23a444-9803-41e2-84bf-0397f19750c4",
+      "id": "7d235c10-c2f4-4163-99f3-0c2e943ec894",
       "name": "Basic LLM Chain1"
     },
     {
@@ -534,10 +534,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        1088,
-        640
+        528,
+        800
       ],
-      "id": "c9481577-e877-485e-8cdd-a203c7bef1c1",
+      "id": "aea1e59a-01ad-4b24-82f4-9be87819e5ff",
       "name": "OpenAI Chat Model1",
       "credentials": {
         "openAiApi": {
@@ -545,6 +545,356 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $input.first()?.json ?? {};\nconst body = (req.body && typeof req.body === \"object\") ? req.body : req;\n\nconst clientId = String(body.clientId ?? \"\").trim();\n\nif (!clientId) {\n  return [{ json: { ok: false, status: 400, message: \"Missing clientId\" } }];\n}\n\nconst now = new Date();\nconst day = now.toISOString().slice(0, 10);\nconst docId = `${clientId}_${day}`;\n\nreturn [{\n  json: {\n    ok: true,\n    clientId,\n    day,\n    docId,\n    limit: 10,\n    nowIso: now.toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1872,
+        832
+      ],
+      "id": "37f16db1-cf65-4d43-81c5-f1d03d5698ac",
+      "name": "BuildUsageKey"
+    },
+    {
+      "parameters": {
+        "jsCode": "const usage = ($json && typeof $json === \"object\") ? $json : {};\nconst current = Number(usage.count ?? 0);\n\nconst meta = $node[\"BuildUsageKey\"].json;\nconst next = current + 1;\n\nreturn [{\n json: {\n  ...meta,\n  current,\n  next,\n  allowed: current < meta.limit,\n  count: next,\n  updatedAt: meta.nowIso,\n}\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1264,
+        800
+      ],
+      "id": "c1f509b8-bd10-4510-852c-408e66ba1f53",
+      "name": "ComputeCount"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{$json.allowed}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1088,
+        800
+      ],
+      "id": "33764ac6-084e-4b28-9a7a-028bbd7f8313",
+      "name": "UnderLimit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "40ed54a9-2250-4ea0-aa57-1bb75e6b5021",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": 429,
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "Daily limit reached (10 recipes/day). Try again tomorrow.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        944
+      ],
+      "id": "94cb21ae-1e4f-4c77-acec-50a9c24a61e3",
+      "name": "Edit FieldsError3"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "upsert",
+        "projectId": "code-a-cuisine-ba168",
+        "collection": "usage",
+        "updateKey": "docId",
+        "columns": "docId, clientId, userId, day, count, updatedAt"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        784
+      ],
+      "id": "acdaf9cb-ff79-4f8e-b9de-ae438912a0af",
+      "name": "Upsert usage doc",
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": "code-a-cuisine-ba168",
+        "collection": "usage",
+        "documentId": "={{$json.docId}}"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        -1456,
+        800
+      ],
+      "id": "a2a9b7a0-ae5c-4906-86fe-72ec897edc8d",
+      "name": "Get usage doc",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd8f2fe2-053a-4c5e-9a48-f2566907a338",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": "={{$json.status}}",
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "={{$json.message}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1456,
+        960
+      ],
+      "id": "499c8d1f-9930-41ce-9add-5539574a5c8f",
+      "name": "Edit FieldsError4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{$json.ok}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1680,
+        832
+      ],
+      "id": "cdf42984-4eb5-4522-aef3-472ad9b4a6a0",
+      "name": "HasUser"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{$json.status}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1248,
+        960
+      ],
+      "id": "0e2e34f8-1b03-4b9f-94ea-bf8a1f6f95f0",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{$json.status}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -688,
+        944
+      ],
+      "id": "f7c8a47f-7710-40a9-9abd-045973e85a13",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{$json.status}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        400
+      ],
+      "id": "252dd160-51ea-4169-b4b0-9162d520434e",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{$json.status}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1520,
+        848
+      ],
+      "id": "bacb1f12-2103-4a9c-a5b9-3ef5ceea3907",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{$json.status}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1696,
+        608
+      ],
+      "id": "d59ac4e0-d751-445d-aed1-0a3dc37adeec",
+      "name": "Respond to Webhook4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{$json.status}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        1088
+      ],
+      "id": "9b74056d-fd3a-4a7e-b042-9ffb764cd5f4",
+      "name": "Respond to Webhook5"
     }
   ],
   "pinData": {},
@@ -564,7 +914,7 @@
       "main": [
         [
           {
-            "node": "PreparePrompt",
+            "node": "BuildUsageKey",
             "type": "main",
             "index": 0
           }
@@ -727,6 +1077,17 @@
         ]
       ]
     },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "ParseAndValidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "OpenAI Chat Model": {
       "ai_languageModel": [
         [
@@ -738,11 +1099,11 @@
         ]
       ]
     },
-    "Basic LLM Chain": {
+    "Basic LLM Chain1": {
       "main": [
         [
           {
-            "node": "ParseAndValidate",
+            "node": "ParseAndValidate1",
             "type": "main",
             "index": 0
           }
@@ -760,11 +1121,146 @@
         ]
       ]
     },
-    "Basic LLM Chain1": {
+    "BuildUsageKey": {
       "main": [
         [
           {
-            "node": "ParseAndValidate1",
+            "node": "HasUser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UnderLimit": {
+      "main": [
+        [
+          {
+            "node": "Upsert usage doc",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit FieldsError3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ComputeCount": {
+      "main": [
+        [
+          {
+            "node": "UnderLimit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert usage doc": {
+      "main": [
+        [
+          {
+            "node": "PreparePrompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get usage doc": {
+      "main": [
+        [
+          {
+            "node": "ComputeCount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HasUser": {
+      "main": [
+        [
+          {
+            "node": "Get usage doc",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit FieldsError4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit FieldsError4": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit FieldsError3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Succes": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit FieldsError": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit FieldsError1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Success1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
             "type": "main",
             "index": 0
           }
@@ -778,11 +1274,11 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "585ea822-b577-41e1-a7ac-5b6cf2a16f0b",
+  "versionId": "0e6a47a0-11f9-41c4-b169-6391f3dc226f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"
   },
-  "id": "R-eXywH9_8Dm45ulqVdac",
+  "id": "cL2Xh30sUrOPZjUu",
   "tags": []
 }

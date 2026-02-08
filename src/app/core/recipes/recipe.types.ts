@@ -38,7 +38,11 @@ export type CreateRecipePayload = { ingredients: string[]; servings: number };
 export type GenerateRecipesPayload = {
   ingredients: string[];
   servings: number;
-  preferences: { cookingTime: CookingTime | null; cuisine: string; diet: string };
+  preferences: {
+    cookingTime: CookingTime | null;
+    cuisine: string;
+    diet: string;
+  };
   helpers: { count: 1 | 2 | 3 };
 };
 

@@ -3,9 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { RECIPE_ENDPOINTS } from '../core/recipes/recipe.endpoints';
+import { getClientId } from '../core/utils/client-id.util';
 import {
-  Recipe, GenerateRecipesPayload, ApiRecipesResponse,
-  GenerateRecipesResponse, LikeRecipeResponse, CreateRecipePayload,
+  Recipe,
+  GenerateRecipesPayload,
+  ApiRecipesResponse,
+  GenerateRecipesResponse,
+  LikeRecipeResponse,
+  CreateRecipePayload,
   CreateRecipeResponse,
 } from '../core/recipes/recipe.types';
 import { mapApiRecipe } from '../core/recipes/recipe.mapper';
@@ -27,20 +32,28 @@ export class RecipeService {
   }
 
   generateRecipes$(payload: GenerateRecipesPayload): Observable<Recipe[]> {
-    return this.http.post<GenerateRecipesResponse>(RECIPE_ENDPOINTS.generate, payload).pipe(
-      map((res) => (res.recipes ?? []).map(mapApiRecipe)),
-    );
+    return this.http
+      .post<GenerateRecipesResponse>(RECIPE_ENDPOINTS.generate, {
+        ...payload,
+        clientId: getClientId(),
+      })
+      .pipe(map((res) => (res.recipes ?? []).map(mapApiRecipe)));
   }
 
   getRecipeById$(id: string): Observable<Recipe | undefined> {
-    return this.getRecipes$(200, 0).pipe(map((list) => list.find((r) => r.id === id)));
+    return this.getRecipes$(200, 0).pipe(
+      map((list) => list.find((r) => r.id === id)),
+    );
   }
 
-  createRecipe$(ingredients: string[], servings: number): Observable<Recipe | undefined> {
+  createRecipe$(
+    ingredients: string[],
+    servings: number,
+  ): Observable<Recipe | undefined> {
     const payload: CreateRecipePayload = { ingredients, servings };
-    return this.http.post<CreateRecipeResponse>(RECIPE_ENDPOINTS.generate, payload).pipe(
-      map((res) => (res.recipe ? mapApiRecipe(res.recipe) : undefined)),
-    );
+    return this.http
+      .post<CreateRecipeResponse>(RECIPE_ENDPOINTS.generate, payload)
+      .pipe(map((res) => (res.recipe ? mapApiRecipe(res.recipe) : undefined)));
   }
 }
 

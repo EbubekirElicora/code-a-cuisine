@@ -17,7 +17,5 @@ function toMissingBasic(x: any): MissingBasic {
 }
 
 function pickName(x: any): string {
-  return String(x.name ?? '').trim()
-    || String(x.raw ?? '').trim()
-    || 'Unknown';
+  return String(x.name ?? '').trim() || String(x.raw ?? '').trim() || 'Unknown';
 }
