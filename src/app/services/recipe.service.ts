@@ -31,6 +31,13 @@ export class RecipeService {
     );
   }
 
+  /*   generateRecipes$(payload: GenerateRecipesPayload): Observable<Recipe[]> {
+    return this.http.post<GenerateRecipesResponse>(RECIPE_ENDPOINTS.generate, payload).pipe(
+      map((res) => (res.recipes ?? []).map(mapApiRecipe)),
+    );
+  }
+ */
+
   generateRecipes$(payload: GenerateRecipesPayload): Observable<Recipe[]> {
     return this.http
       .post<GenerateRecipesResponse>(RECIPE_ENDPOINTS.generate, {
