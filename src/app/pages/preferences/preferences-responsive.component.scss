@@ -19,6 +19,14 @@
     justify-content: center;
     align-items: center;
   }
+
+  .loading-overlay-header {
+    position: absolute;
+    top: 40px;
+    padding-left: 0;
+    display: block;
+    left: 68px;
+  }
 }
 
 @media (max-width: 750px) {

@@ -2,6 +2,13 @@
   display: flex;
 }
 
+main {
+  display: flex;
+  width: 1920px;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
 .preferences {
   position: relative;
   min-height: 100vh;
@@ -214,13 +221,15 @@
   z-index: 900;
   background-color: rgba(57, 96, 57, 1);
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .loading-overlay-header {
   position: absolute;
   top: 40px;
-  left: 68px;
+  padding-left: 68px;
+  display: flex;
 }
 
 .loading-overlay-inner {

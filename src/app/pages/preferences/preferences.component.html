@@ -232,33 +232,35 @@
       <p class="pref-error" *ngIf="error && !errorType">{{ error }}</p>
     </div>
   </div>
-  
+
   <!-- LOADING OVERLAY -->
   <div class="loading-overlay" *ngIf="loading">
-    <div class="loading-overlay-header">
-      <img
-        class="header-logo"
-        src="assets/img/icons/menuBar_cremy.svg"
-        alt="Code à Cuisine"
-        [routerLink]="['/']"
-      />
-    </div>
-    <div class="loading-overlay-inner">
-      <div class="loading-card">
+    <main>
+      <div class="loading-overlay-header">
         <img
-          class="loading-spinner"
-          src="assets/spinner/gif/Code_Cuisine_Loading_Spinner.gif"
-          alt="Generating recipes"
+          class="header-logo"
+          src="assets/img/icons/menuBar_cremy.svg"
+          alt="Code à Cuisine"
+          [routerLink]="['/']"
         />
       </div>
+      <div class="loading-overlay-inner">
+        <div class="loading-card">
+          <img
+            class="loading-spinner"
+            src="assets/spinner/gif/Code_Cuisine_Loading_Spinner.gif"
+            alt="Generating recipes"
+          />
+        </div>
 
-      <p class="loading-text">
-        Generating
-        <span class="loading-dot dot-1">.</span>
-        <span class="loading-dot dot-2">.</span>
-        <span class="loading-dot dot-3">.</span>
-      </p>
-    </div>
+        <p class="loading-text">
+          Generating
+          <span class="loading-dot dot-1">.</span>
+          <span class="loading-dot dot-2">.</span>
+          <span class="loading-dot dot-3">.</span>
+        </p>
+      </div>
+    </main>
   </div>
 
   <!-- ERROR POPUP OVERLAY -->
