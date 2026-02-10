@@ -27,7 +27,6 @@ export class PreferencesComponent {
   loading = false;
   error = '';
   errorType: ErrorType = null;
-  private readonly MIN_INGREDIENTS = 3;
 
   constructor(
     public flow: RecipeFlowService,
@@ -68,66 +67,10 @@ export class PreferencesComponent {
     return this.flow.preferences.diet === value;
   }
 
-  /*   generate() {
-    if (this.loading) return;
-    this.startLoading();
-    this.api.generateRecipes$(this.buildPayload()).subscribe({
-      next: (recipes) => this.onGenerateSuccess(recipes),
-      error: (err) => this.onGenerateError(err),
-    });
-  } */
-
-/*   generate() {
-    if (this.loading) return;
-    const got = this.flow.ingredients?.length ?? 0;
-    if (got < this.MIN_INGREDIENTS) {
-      this.setIngredientsError();
-      console.warn('[GenerateRecipes] blocked by client validation', {
-        min: this.MIN_INGREDIENTS,
-        got,
-        ingredients: this.flow.ingredients,
-      });
-      return;
-    }
-    this.startLoading();
-    this.api
-      .generateRecipes$(this.buildPayload())
-      .subscribe({
-        next: (recipes) => this.onGenerateSuccess(recipes),
-        error: (err) => this.onGenerateError(err),
-      });
-  } */
-
   generate() {
-    if (this.shouldAbortGenerate()) return;
-    if (!this.hasMinimumIngredients()) {
-      this.handleIngredientValidationFailure();
-      return;
-    }
+    if (this.loading) return;
     this.startLoading();
     this.subscribeToRecipeGeneration();
-  }
-
-  private shouldAbortGenerate(): boolean {
-    return this.loading;
-  }
-
-  private getIngredientCount(): number {
-    return this.flow.ingredients?.length ?? 0;
-  }
-
-  private hasMinimumIngredients(): boolean {
-    return this.getIngredientCount() >= this.MIN_INGREDIENTS;
-  }
-
-  private handleIngredientValidationFailure(): void {
-    const got = this.getIngredientCount();
-    this.setIngredientsError();
-    console.warn('[GenerateRecipes] blocked by client validation', {
-      min: this.MIN_INGREDIENTS,
-      got,
-      ingredients: this.flow.ingredients,
-    });
   }
 
   private subscribeToRecipeGeneration(): void {
@@ -167,7 +110,9 @@ export class PreferencesComponent {
 
   private onGenerateSuccess(recipes: any[]) {
     this.stopLoading();
-    if (!recipes || recipes.length === 0) return this.setIngredientsError();
+    /*     if (!recipes || recipes.length === 0) return this.setIngredientsError();
+     */
+    if (!recipes || recipes.length === 0) return this.setGenericError();
     this.flow.setLastResults(recipes.slice(0, 3));
     this.router.navigate(['/results']);
   }
