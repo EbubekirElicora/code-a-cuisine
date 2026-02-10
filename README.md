@@ -92,6 +92,8 @@ The main focus of the project is robustness, validation, and predictable behavio
 | `API – Generate Recipes main.json`         | Recipe generation, validation, repair |
 | `Library – Recipes List _ Get Recipe.json` | Retrieve and sort stored recipes      |
 | `Api – Like Recipe.json`                   | Increment recipe likes                |
+| `Log Unhandled Workflow Errors`            | Check on worfklow crash               |
+
 
 ---
 

@@ -14,7 +14,7 @@
         0
       ],
       "id": "446531ba-71a8-488e-b967-a845c47c0bf4",
-      "name": "Webhook",
+      "name": "getRecipes",
       "webhookId": "3e38d144-dae7-439e-aa93-316d5cbb0a05"
     },
     {
@@ -25,7 +25,7 @@
         "database": "=(default)",
         "collection": "recipes"
       },
-      "name": "Get many documents",
+      "name": "db_firestore_listRecipes",
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "position": [
         208,
@@ -39,6 +39,40 @@
           "name": "Google Service Account account"
         }
       }
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "likes",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "7d295120-1f7c-4dfa-a2ae-21fee3668487",
+      "name": "sort_byLikesDesc"
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $node[\"getRecipes\"].json.query ?? {};\nconst limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)));\nconst offset = Math.max(0, Number(q.offset ?? 0));\nconst all = $input.all();\nconst page = all.slice(offset, offset + limit);\nreturn page;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "40f7e204-f980-49b5-a3b3-0d9ca3df9e37",
+      "name": "page_limitOffset"
     },
     {
       "parameters": {
@@ -67,83 +101,49 @@
         0
       ],
       "id": "eb2dea21-6d35-40ac-81a0-80d856897147",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
-        "sortFieldsUi": {
-          "sortField": [
-            {
-              "fieldName": "likes",
-              "order": "descending"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.sort",
-      "typeVersion": 1,
-      "position": [
-        400,
-        0
-      ],
-      "id": "7d295120-1f7c-4dfa-a2ae-21fee3668487",
-      "name": "Sort"
-    },
-    {
-      "parameters": {
-        "jsCode": "const q = $node[\"Webhook\"].json.query ?? {};\nconst limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)));\nconst offset = Math.max(0, Number(q.offset ?? 0));\nconst all = $input.all();\nconst page = all.slice(offset, offset + limit);\nreturn page;\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        592,
-        0
-      ],
-      "id": "40f7e204-f980-49b5-a3b3-0d9ca3df9e37",
-      "name": "Code in JavaScript"
+      "name": "out_shapeResponse_200"
     }
   ],
   "pinData": {},
   "connections": {
-    "Webhook": {
+    "getRecipes": {
       "main": [
         [
           {
-            "node": "Get many documents",
+            "node": "db_firestore_listRecipes",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get many documents": {
+    "db_firestore_listRecipes": {
       "main": [
         [
           {
-            "node": "Sort",
+            "node": "sort_byLikesDesc",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Sort": {
+    "sort_byLikesDesc": {
       "main": [
         [
           {
-            "node": "Code in JavaScript",
+            "node": "page_limitOffset",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Code in JavaScript": {
+    "page_limitOffset": {
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "out_shapeResponse_200",
             "type": "main",
             "index": 0
           }
@@ -157,7 +157,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b3349dca-1be9-4a33-8f4d-b287c633cd89",
+  "versionId": "47e8572d-00cc-4393-a6fc-2657591aae37",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"

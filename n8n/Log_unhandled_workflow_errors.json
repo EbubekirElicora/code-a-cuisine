@@ -1,0 +1,138 @@
+{
+  "name": "Log_unhandled_workflow_errors",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -16
+      ],
+      "id": "41486eef-fd54-47c0-8a79-511343d5db7a",
+      "name": "on_workflow_crash"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ee1b9907-682b-48ee-b508-7359af371766",
+              "name": "executionId",
+              "value": "={{ $json.execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "efde3252-ff02-451c-818c-e686193274e7",
+              "name": "workflow",
+              "value": "={{ $json.workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "e181eb67-c02e-4460-ad07-7f0c54d96ff7",
+              "name": "stage",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "e4893b86-06bc-4a29-99c3-b4538b7a40ca",
+              "name": "message",
+              "value": "={{ $json.execution.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "525633e1-a1e9-4b4a-9d68-c45a4d2b88fa",
+              "name": "timestamp",
+              "value": "={{$now}}",
+              "type": "string"
+            },
+            {
+              "id": "fbeca2f0-9580-48b2-9468-d262b11ab509",
+              "name": "stack",
+              "value": "={{ $json.execution.error.stack }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        -16
+      ],
+      "id": "7a616d55-a30c-4ce3-bcb4-1514032c5256",
+      "name": "map_error_to_log_entry"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "create",
+        "projectId": "code-a-cuisine-ba168",
+        "collection": "workflowLogs",
+        "documentId": "=",
+        "columns": "executionId, workflow, stage, message, timestamp, stack"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        -16
+      ],
+      "id": "b90a9ab6-b55f-49e2-a144-8f3145293c9f",
+      "name": "write_error_log_to_firestore",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "on_workflow_crash": {
+      "main": [
+        [
+          {
+            "node": "map_error_to_log_entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "map_error_to_log_entry": {
+      "main": [
+        [
+          {
+            "node": "write_error_log_to_firestore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "write_error_log_to_firestore": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "06803601-a10a-4944-87c7-86efe10f2edd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"
+  },
+  "id": "dnH0yFoTrM7rmdfsldiR9",
+  "tags": []
+}
