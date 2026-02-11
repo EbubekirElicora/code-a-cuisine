@@ -3,19 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "jsCode": "const meta = $node[\"build_recipe_prompt(from request)\"].json.meta;\nconst raw = $json.llmRaw ?? \"\";\n\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\nconst MIN_STEP_COUNT = 4;\nconst MAX_STEP_COUNT = 6;\nconst extraTitles = [\n  \"Prep final components\",\n  \"Build the base flavor\",\n  \"Combine and balance\",\n  \"Finish and plate\",\n  \"Quick quality check\",\n  \"Serve and enjoy\",\n];\n\nconst extraLines = [\n  \"Focus on consistent heat and steady stirring so nothing scorches while flavors deepen.\",\n  \"Taste as you go and adjust salt, acidity, and richness in small steps for a clean finish.\",\n  \"Look for clear cues: aroma becomes fragrant, texture turns cohesive, and moisture reduces slightly.\",\n  \"Keep movements efficient: scrape the pan bottom and fold ingredients gently to avoid breaking them.\",\n];\nif (start === -1 || end === -1 || end <= start) {\n  return [\n    { json: { valid: false, reason: \"AUTOFIX_NO_JSON_FOUND\", llmRaw: raw } },\n  ];\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw.slice(start, end + 1));\n} catch (e) {\n  return [\n    {\n      json: { valid: false, reason: \"AUTOFIX_JSON_PARSE_FAILED\", llmRaw: raw },\n    },\n  ];\n}\nif (parsed.Recipes && !parsed.recipes) {\n  parsed.recipes = parsed.Recipes;\n  delete parsed.Recipes;\n}\nconst recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];\nif (recipes.length !== 3) {\n  return [\n    {\n      json: {\n        valid: false,\n        reason: \"AUTOFIX_NOT_3_RECIPES\",\n        got: recipes.length,\n        llmRaw: raw,\n      },\n    },\n  ];\n}\nfunction ensureStepObject(s, i, recipeTitle) {\n  if (s && typeof s === \"object\") {\n    return {\n      title: String(s.title ?? \"\").trim(),\n      description: String(s.description ?? \"\").trim(),\n    };\n  }\n  const text = String(s ?? \"\").trim();\n  return {\n    title: text ? text.split(\".\")[0].slice(0, 40) : `Step ${i + 1}`,\n    description: text,\n  };\n}\n\nfunction expandDescription(desc, recipeTitle, i) {\n  const d = String(desc ?? \"\").trim();\n  if (d.length >= 120) return d;\n  const variants = [\n    \"Keep the heat moderate and stir often so flavors develop without burning.\",\n    \"Aim for even cooking: adjust the heat as needed and watch for a light golden color.\",\n    \"Taste and adjust seasoning gradually to balance salt, acidity, and richness.\",\n    \"Look for clear cues: the aroma should turn fragrant and the texture should feel cohesive.\",\n  ];\n  const v = variants[(recipeTitle.length + i) % variants.length];\n  if (!d) {\n    return `Work on \\\"${recipeTitle}\\\" and complete this step carefully. ${v}`;\n  }\n  return `${d} ${v}`;\n}\n\nfor (const r of recipes) {\n  const recipeTitle = String(r.title ?? \"the dish\").trim() || \"the dish\";\n  let steps = Array.isArray(r.steps) ? r.steps : [];\n  steps = steps.map((s, i) => ensureStepObject(s, i, recipeTitle));\n  while (steps.length < MIN_STEP_COUNT) {\n    const i = steps.length;\n    steps.push({\n      title: extraTitles[i % extraTitles.length],\n      description: `Continue working on \"${recipeTitle}\" to prepare the next stage. ${extraLines[i % extraLines.length]}`,\n    });\n  }\n  steps = steps.slice(0, MAX_STEP_COUNT);\n  steps = steps.map((s, i) => ({\n    title: s.title || `Step ${i + 1}`,\n    description: expandDescription(s.description, recipeTitle, i),\n  }));\n  r.steps = steps;\n  if (Array.isArray(r.missingBasics)) {\n    r.missingBasics = r.missingBasics.slice(0, 3);\n  } else {\n    r.missingBasics = [];\n  }\n}\n\nfunction splitStepText(step) {\n  const text = String(step ?? \"\").trim();\n  if (!text) return { title: \"\", body: \"\" };\n  const parts = text.split(\":\");\n  if (parts.length === 2 && parts[0].length < 40) {\n    return { title: parts[0].trim(), body: parts[1].trim() };\n  }\n  const andIndex = text.toLowerCase().indexOf(\" und \");\n  if (andIndex > 0 && andIndex < text.length - 3) {\n    return {\n      title: text.slice(0, andIndex).trim(),\n      body: text.slice(andIndex + 4).trim(),\n    };\n  }\n  const words = text.split(\" \");\n  if (words.length > 3) {\n    const title = words.slice(0, 3).join(\" \");\n    const body = words.slice(3).join(\" \");\n    return { title, body };\n  }\n  return { title: text, body: \"\" };\n}\n\nfunction buildDisplayTags(meta) {\n  const tags = [];\n  if (meta.diet && meta.diet !== \"None\") tags.push(meta.diet);\n  if (meta.cookingTime) tags.push(meta.cookingTime);\n  return tags;\n}\n\nconst now = new Date().toISOString();\n\nconst NUTRITION_BASE = {\n  energyKcal: 630,\n  proteinG: 18,\n  fatG: 24,\n  carbsG: 58,\n};\n\nfunction buildNutrition(servings) {\n  const s = Math.max(1, Math.floor(Number(servings) || 1));\n  const byPortion = Array.from({ length: s }, (_, i) => {\n    const mult = i + 1;\n    return {\n      portion: mult,\n      energyKcal: Math.round(NUTRITION_BASE.energyKcal * mult),\n      proteinG: round1(NUTRITION_BASE.proteinG * mult),\n      fatG: round1(NUTRITION_BASE.fatG * mult),\n      carbsG: round1(NUTRITION_BASE.carbsG * mult),\n    };\n  });\n  return {\n    perServing: { ...NUTRITION_BASE },\n    byPortion,\n    total: byPortion[s - 1],\n  };\n}\n\nfunction parseBasic(raw) {\n  const s = String(raw ?? \"\").trim();\n  if (!s) return null;\n  let m = s.match(/^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)\\s+(.+)$/);\n  if (m) {\n    return {\n      amount: Number(m[1].replace(\",\", \".\")),\n      unit: m[2],\n      name: m[3].trim(),\n      raw: s,\n    };\n  }\n  m = s.match(/^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)$/);\n  if (m) {\n    return {\n      name: m[1].trim(),\n      amount: Number(m[2].replace(\",\", \".\")),\n      unit: m[3],\n      raw: s,\n    };\n  }\n  return { name: s, raw: s };\n}\n\nfunction normalizeMissingBasics(arr) {\n  const list = Array.isArray(arr) ? arr : [];\n  return list\n    .map((x) => {\n      if (x && typeof x === \"object\") {\n        const name = String(x.name ?? \"\").trim();\n        if (!name) return null;\n        const amount =\n          x.amount == null || x.amount === \"\"\n            ? undefined\n            : Number(String(x.amount).replace(\",\", \".\"));\n        const unit = x.unit != null ? String(x.unit).trim() : undefined;\n        return {\n          name,\n          amount: Number.isFinite(amount) ? amount : undefined,\n          unit: unit || undefined,\n          raw: typeof x.raw === \"string\" ? x.raw : undefined,\n        };\n      }\n      return parseBasic(x);\n    })\n    .filter(Boolean)\n    .filter(\n      (v, i, a) =>\n        a.findIndex(\n          (t) =>\n            t.name === v.name && t.amount === v.amount && t.unit === v.unit,\n        ) === i,\n    );\n}\n\nfunction stripUndefined(obj) {\n  if (Array.isArray(obj)) {\n    return obj.map(stripUndefined);\n  }\n  if (obj && typeof obj === \"object\") {\n    return Object.fromEntries(\n      Object.entries(obj)\n        .filter(([_, v]) => v !== undefined)\n        .map(([k, v]) => [k, stripUndefined(v)]),\n    );\n  }\n  return obj;\n}\n\nfunction finalizeMissingBasics(arr) {\n  let basics = stripUndefined(normalizeMissingBasics(arr));\n  basics = basics.filter(\n    (b) => b && b.name && (b.amount == null || b.amount > 0),\n  );\n  const byName = new Map(\n    basics.map((b) => [String(b.name).toLowerCase().trim(), b]),\n  );\n  const wanted = [\n    { key: \"salt\", def: { name: \"salt\", amount: 1, unit: \"pinch\" } },\n    { key: \"pepper\", def: { name: \"pepper\", amount: 1, unit: \"pinch\" } },\n    { key: \"oil\", def: { name: \"oil\", amount: 1, unit: \"tbsp\" } },\n  ];\n  const result = wanted.map(({ key, def }) => {\n    const existing = byName.get(key);\n    if (!existing) return def;\n    return {\n      name: def.name,\n      amount:\n        existing.amount != null && existing.amount > 0\n          ? existing.amount\n          : def.amount,\n      unit: existing.unit ? existing.unit : def.unit,\n      ...(existing.raw ? { raw: existing.raw } : {}),\n    };\n  });\n  return result;\n}\n\nreturn recipes.map((r, index) => {\n  const rawSteps = Array.isArray(r.steps) ? r.steps : [];\n  const stepTitles = [];\n  const stepBodies = [];\n  const flatSteps = [];\n\n  for (const s of rawSteps) {\n    if (s && typeof s === \"object\") {\n      const t = String(s.title ?? \"\").trim();\n      const d = String(s.description ?? \"\").trim();\n      const title = t || (d ? splitStepText(d).title : \"\");\n      const body = d || (t ? splitStepText(t).body : \"\");\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    } else {\n      const text = String(s ?? \"\").trim();\n      const { title, body } = splitStepText(text);\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    }\n  }\n\n  return {\n    json: {\n      title: (r.title || \"\").trim() || `Recipe ${index + 1}`,\n      ingredientsUsed:\n        Array.isArray(r.ingredientsUsed) && r.ingredientsUsed.length\n          ? r.ingredientsUsed\n          : meta.inputIngredients,\n      missingBasics: finalizeMissingBasics(r.missingBasics),\n      steps: flatSteps,\n      stepTitles,\n      stepBodies,\n      helperTodos: Array.isArray(r.helperTodos) ? r.helperTodos : [],\n      servings: Number(meta.servings),\n      energyKcal: NUTRITION_BASE.energyKcal,\n      proteinG: NUTRITION_BASE.proteinG,\n      fatG: NUTRITION_BASE.fatG,\n      carbsG: NUTRITION_BASE.carbsG,\n      createdAt: now,\n      likes: 0,\n      tags: buildDisplayTags(meta),\n      timeCategory: meta.cookingTime ?? null,\n      cuisine: meta.cuisine ?? null,\n      diet: meta.diet ?? null,\n      helpersCount:\n        meta.helpersCount != null ? Number(meta.helpersCount) : null,\n    },\n  };\n});\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        160,
-        400
-      ],
-      "id": "02542977-0173-449f-9c45-ec7f46052de1",
-      "name": "AutoFixSoftIssues"
-    },
-    {
-      "parameters": {
         "model": {
           "__rl": true,
           "value": "gpt-4o-mini",
@@ -68,493 +55,8 @@
     },
     {
       "parameters": {
-        "jsCode": "const req = $input.first()?.json ?? {};\nconst body = (req.body && typeof req.body === \"object\") ? req.body : req;\n\nconst clientId = String(body.clientId ?? \"\").trim();\n\nif (!clientId) {\n  return [{ json: { ok: false, status: 429, message: \"Missing clientId\" } }];\n}\n\nconst now = new Date();\nconst day = now.toISOString().slice(0, 10);\nconst docId = `${clientId}_${day}`;\n\nreturn [{\n  json: {\n    ok: true,\n    clientId,\n    day,\n    docId,\n    limit: 10,\n    nowIso: now.toISOString(),\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1872,
-        928
-      ],
-      "id": "37f16db1-cf65-4d43-81c5-f1d03d5698ac",
-      "name": "BuildUsageKey"
-    },
-    {
-      "parameters": {
-        "jsCode": "const usage = ($json && typeof $json === \"object\") ? $json : {};\nconst current = Number(usage.count ?? 0);\n\nconst meta = $node[\"BuildUsageKey\"].json;\nconst next = current + 1;\n\nreturn [{\n json: {\n  ...meta,\n  current,\n  next,\n  allowed: current < meta.limit,\n  count: next,\n  updatedAt: meta.nowIso,\n}\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1344,
-        800
-      ],
-      "id": "c1f509b8-bd10-4510-852c-408e66ba1f53",
-      "name": "ComputeCount"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
-              "leftValue": "={{$json.allowed}}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        -1184,
-        800
-      ],
-      "id": "33764ac6-084e-4b28-9a7a-028bbd7f8313",
-      "name": "UnderLimit"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
-              "leftValue": "={{$json.ok}}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        -1696,
-        928
-      ],
-      "id": "cdf42984-4eb5-4522-aef3-472ad9b4a6a0",
-      "name": "HasUser"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "generate-recipes",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "deb944b7-36a7-42c5-9e36-f84496701ddf",
-      "name": "generateRecipes",
-      "type": "n8n-nodes-base.webhook",
-      "position": [
-        -2256,
-        1136
-      ],
-      "webhookId": "854b0221-203a-4204-bd40-15d367830ea5",
-      "typeVersion": 2
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "658b3265-04a0-43b1-8071-914e54b7e013",
-              "leftValue": "={{$json.body.ingredients && $json.body.ingredients.length >= 3}}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            },
-            {
-              "id": "ac6ceb47-f3c2-4974-b00e-5c028c4b0764",
-              "leftValue": "={{$json.body.servings >= 1 && $json.body.servings <= 12}}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        -2080,
-        1136
-      ],
-      "id": "6ad22f3e-d4bf-4667-bce3-382f33336235",
-      "name": "validate_requestBody"
-    },
-    {
-      "parameters": {
-        "jsCode": "const body = $(\"generateRecipes\").first().json.body ?? {};\nconst ingredients = Array.isArray(body.ingredients) ? body.ingredients : [];\nconst servings = Number(body.servings ?? 2);\nconst preferences = body.preferences ?? {};\nconst helpers = body.helpers ?? {};\nconst helpersCount = Math.max(1, Math.min(3, Number(helpers.count ?? 1)));\nconst cookingTime = preferences.cookingTime ?? \"Medium\";\nconst cuisine = preferences.cuisine ?? \"Fusion\";\nconst diet = preferences.diet ?? \"None\";\nconst inputIngredients = ingredients\n  .map((s) => String(s).trim())\n  .filter(Boolean);\n\nconst prompt = `\nYou are a recipe generator. Output ONLY valid JSON. No markdown.\n\nINPUT:\n- ingredients: ${JSON.stringify(inputIngredients)}\n- servings: ${servings}\n- timeCategory: ${cookingTime}\n- cuisine: ${cuisine}\n- diet: ${diet}\n- helpersCount: ${helpersCount}\n\nHARD RULES:\n0) Language: English only for all step titles and descriptions.\n   Exception: keep original dish/ingredient names as‑is; do not translate them.\n1) Generate exactly 3 recipes.\n2) Each recipe must use at least 70% of the INPUT ingredients.\n3) Each recipe may contain at most 3 missingBasics.\n4) Each recipe must have between 4 and 6 steps.\n5) Split helper tasks among helpers 1..helpersCount.\n6) Each step MUST have:\n   - a short title (2–6 words)\n   - a longer description (2–4 sentences, 45–80 words).\n\nOUTPUT JSON SCHEMA:\n{\n  \"recipes\": [\n    {\n      \"title\": \"string\",\n      \"ingredientsUsed\": [\"string\"],\n      \"missingBasics\": [\n  { \"name\": \"string\", \"amount\": 0, \"unit\": \"string\" }\n],\n      \"steps\": [\n        {\n          \"title\": \"short step title, 2-6 words\",\n          \"description\": \"detailed step description, 2-4 sentences, 45-80 words\"\n        }\n      ],\n      \"helperTodos\": [\n        { \"helper\": 1, \"tasks\": [\"string (max 8 words each)\"] }\n      ]\n    }\n  ]\n}\n\nIMPORTANT FORMATTING RULES:\n- Return EXACTLY one JSON object.\n- Generate exactly 3 recipes.\n- If you cannot comply, return exactly:\n{ \"recipes\": [] }\n- The first character MUST be '{' and the last character MUST be '}'.\n- Do NOT include any explanation, comments or markdown.\n- All step descriptions must be plain text (no line breaks, no bullet points).\n\nRemember: exactly 3 recipes, valid JSON only.\n`;\n\nreturn [\n  {\n    json: {\n      prompt,\n      meta: {\n        inputIngredients,\n        servings,\n        cookingTime,\n        cuisine,\n        diet,\n        helpersCount,\n      },\n    },\n  },\n];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -768,
-        784
-      ],
-      "id": "89ef8479-dc26-450a-ae25-987a1a06f8f9",
-      "name": "build_recipe_prompt(from request)"
-    },
-    {
-      "parameters": {
-        "jsCode": "function getText(j) {\n  if (!j) return \"\";\n  if (typeof j.response === \"string\") return j.response;\n  if (typeof j.output_text === \"string\") return j.output_text;\n  const t = j.output?.[0]?.content?.[0]?.text;\n  if (typeof t === \"string\") return t;\n  if (typeof j.text === \"string\") return j.text;\n  if (typeof j.content === \"string\") return j.content;\n  if (typeof j.message?.content === \"string\") return j.message.content;\n  return \"\";\n}\n\nconst raw = getText($json);\nconst meta = $node[\"build_recipe_prompt(from request)\"].json.meta;\nlet jsonOnly = raw;\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\nif (start >= 0 && end >= start) jsonOnly = raw.slice(start, end + 1);\njsonOnly = jsonOnly.replace(/,\\s*}/g, \"}\").replace(/,\\s*]/g, \"]\");\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonOnly);\n} catch {\n  return [{ json: { valid: false, reason: \"JSON_PARSE_FAILED\", llmRaw: raw } }];\n}\nif (parsed.Recipes && !parsed.recipes) {\n  parsed.recipes = parsed.Recipes;\n  delete parsed.Recipes;\n}\n\nconst synonymMap = {\n  reis: [\"reis\", \"rice\"],\n  tofu: [\"tofu\"],\n  sojasauce: [\"sojasauce\", \"soy sauce\", \"soya sauce\"],\n  zwiebel: [\"zwiebel\", \"onion\"],\n  knoblauch: [\"knoblauch\", \"garlic\"],\n  ingwer: [\"ingwer\", \"ginger\"],\n  butter: [\"butter\"],\n  zucker: [\"zucker\", \"sugar\"],\n  mehl: [\"mehl\", \"flour\"],\n  salz: [\"salz\", \"salt\"],\n  pfeffer: [\"pfeffer\", \"pepper\"],\n  öl: [\"öl\", \"oil\"],\n  tomaten: [\"tomaten\", \"tomatoes\", \"tomato\"],\n  huhn: [\"huhn\", \"chicken\"],\n  rindfleisch: [\"rindfleisch\", \"beef\"],\n  schwein: [\"schwein\", \"pork\"],\n  kartoffeln: [\"kartoffeln\", \"potatoes\", \"potato\"],\n  sahne: [\"sahne\", \"cream\"],\n  milch: [\"milch\", \"milk\"],\n};\n\nconst recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];\nif (recipes.length !== 3) {\n  return [\n    {\n      json: {\n        valid: false,\n        reason: \"NOT_EXACTLY_3_RECIPES\",\n        got: recipes.length,\n        llmRaw: raw,\n      },\n    },\n  ];\n}\n\nconst inputSet = new Set();\nfor (const ingRaw of meta.inputIngredients ?? []) {\n  const ing = String(ingRaw).toLowerCase().trim();\n  (synonymMap[ing] ?? [ing]).forEach((s) => inputSet.add(s));\n}\nconst minRequired = Math.ceil((meta.inputIngredients?.length ?? 0) * 0.7);\n\nfunction normalize(x) {\n  return String(x ?? \"\")\n    .toLowerCase()\n    .trim();\n}\n\nconst MIN_STEP_COUNT = 4;\nconst MAX_STEP_COUNT = 6;\nconst germanMarkers = [\n  \" anrichten\",\n  \" servieren\",\n  \" vorbereiten\",\n  \" vorbereitung\",\n  \" zubereiten\",\n  \" würzen\",\n  \" schneiden\",\n  \" braten\",\n  \" kochen\",\n  \" backen\",\n  \" köcheln\",\n  \" fertig\",\n  \" machen\",\n  \" zutaten\",\n  \" rühren\",\n  \" erhitzen\",\n  \" pfanne\",\n  \" topf\",\n  \" minuten\",\n  \" und \",\n  \" mit \",\n  \" für \",\n  \" auf \",\n  \" bei \",\n  \" dann \",\n  \"ä\",\n  \"ö\",\n  \"ü\",\n  \"ß\",\n];\n\nconst MIN_DESC_CHARS = 120;\n\nfor (let idx = 0; idx < recipes.length; idx++) {\n  const r = recipes[idx] ?? {};\n  const steps = Array.isArray(r.steps) ? r.steps : [];\n  if (steps.length < MIN_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_FEW_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  if (steps.length > MAX_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_MANY_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const stepBlob = steps\n    .map((s) => {\n      if (s && typeof s === \"object\")\n        return `${s.title ?? \"\"} ${s.description ?? \"\"}`;\n      return String(s ?? \"\");\n    })\n    .join(\" \")\n    .toLowerCase();\n  if (germanMarkers.some((w) => stepBlob.includes(w))) {\n    return [\n      {\n        json: { valid: false, reason: \"NON_ENGLISH_STEPS\", idx, llmRaw: raw },\n      },\n    ];\n  }\n\n  const tooShort = steps.some((s) => {\n    const d =\n      s && typeof s === \"object\"\n        ? String(s.description ?? \"\")\n        : String(s ?? \"\");\n    return d.trim().length < MIN_DESC_CHARS;\n  });\n  if (tooShort) {\n    return [\n      { json: { valid: false, reason: \"STEPS_TOO_SHORT\", idx, llmRaw: raw } },\n    ];\n  }\n\n  const ingredientsUsed = Array.isArray(r.ingredientsUsed)\n    ? r.ingredientsUsed\n    : [];\n  const usedFromInput = ingredientsUsed\n    .map(normalize)\n    .filter((x) => inputSet.has(x));\n  const uniqueUsed = [...new Set(usedFromInput)];\n  if (uniqueUsed.length < minRequired) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INGREDIENT_RATIO_TOO_LOW\",\n          idx,\n          usedCount: uniqueUsed.length,\n          minRequired,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const hc = Number(meta.helpersCount ?? 1);\n  if (hc < 1 || hc > 3) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INVALID_HELPERS_COUNT_META\",\n          hc,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n}\n\nfunction splitStepText(step) {\n  const text = String(step ?? \"\").trim();\n  if (!text) return { title: \"\", body: \"\" };\n  const parts = text.split(\":\");\n  if (parts.length === 2 && parts[0].length < 40) {\n    return { title: parts[0].trim(), body: parts[1].trim() };\n  }\n  const andIndex = text.toLowerCase().indexOf(\" und \");\n  if (andIndex > 0 && andIndex < text.length - 3) {\n    return {\n      title: text.slice(0, andIndex).trim(),\n      body: text.slice(andIndex + 4).trim(),\n    };\n  }\n  const words = text.split(\" \");\n  if (words.length > 3) {\n    const title = words.slice(0, 3).join(\" \");\n    const body = words.slice(3).join(\" \");\n    return { title, body };\n  }\n  return { title: text, body: \"\" };\n}\n\nfunction buildDisplayTags(meta) {\n  const tags = [];\n  if (meta.diet && meta.diet !== \"None\") {\n    tags.push(meta.diet);\n  }\n  if (meta.cookingTime) {\n    tags.push(meta.cookingTime);\n  }\n  return tags;\n}\n\nconst now = new Date().toISOString();\n\nconst NUTRITION_BASE = {\n  energyKcal: 630,\n  proteinG: 18,\n  fatG: 24,\n  carbsG: 58,\n};\n\nfunction buildNutrition(servings) {\n  const s = Math.max(1, Math.floor(Number(servings) || 1));\n\n  const byPortion = Array.from({ length: s }, (_, i) => {\n    const mult = i + 1;\n    return {\n      portion: mult,\n      energyKcal: Math.round(NUTRITION_BASE.energyKcal * mult),\n      proteinG: round1(NUTRITION_BASE.proteinG * mult),\n      fatG: round1(NUTRITION_BASE.fatG * mult),\n      carbsG: round1(NUTRITION_BASE.carbsG * mult),\n    };\n  });\n\n  return {\n    perServing: { ...NUTRITION_BASE },\n    byPortion,\n    total: byPortion[s - 1],\n  };\n}\n\nreturn recipes.map((r, index) => {\n  const rawSteps = Array.isArray(r.steps) ? r.steps : [];\n  const stepTitles = [];\n  const stepBodies = [];\n  const flatSteps = [];\n\n  for (const s of rawSteps) {\n    if (s && typeof s === \"object\") {\n      const t = String(s.title ?? \"\").trim();\n      const d = String(s.description ?? \"\").trim();\n      const title = t || (d ? splitStepText(d).title : \"\");\n      const body = d || (t ? splitStepText(t).body : \"\");\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    } else {\n      const text = String(s ?? \"\").trim();\n      const { title, body } = splitStepText(text);\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    }\n  }\n\n  function parseBasic(raw) {\n    const s = String(raw ?? \"\").trim();\n    if (!s) return null;\n    let m = s.match(/^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)\\s+(.+)$/);\n    if (m) {\n      return {\n        amount: Number(m[1].replace(\",\", \".\")),\n        unit: m[2],\n        name: m[3].trim(),\n        raw: s,\n      };\n    }\n    m = s.match(/^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)$/);\n    if (m) {\n      return {\n        name: m[1].trim(),\n        amount: Number(m[2].replace(\",\", \".\")),\n        unit: m[3],\n        raw: s,\n      };\n    }\n    return { name: s, raw: s };\n  }\n\n  function normalizeMissingBasics(arr) {\n    const list = Array.isArray(arr) ? arr : [];\n    return list\n      .map((x) => {\n        if (x && typeof x === \"object\") {\n          const name = String(x.name ?? \"\").trim();\n          if (!name) return null;\n          const amount =\n            x.amount == null || x.amount === \"\"\n              ? undefined\n              : Number(String(x.amount).replace(\",\", \".\"));\n          const unit = x.unit != null ? String(x.unit).trim() : undefined;\n\n          return {\n            name,\n            amount: Number.isFinite(amount) ? amount : undefined,\n            unit: unit || undefined,\n            raw: typeof x.raw === \"string\" ? x.raw : undefined,\n          };\n        }\n        return parseBasic(x);\n      })\n      .filter(Boolean)\n      .filter(\n        (v, i, a) =>\n          a.findIndex(\n            (t) =>\n              t.name === v.name && t.amount === v.amount && t.unit === v.unit,\n          ) === i,\n      );\n  }\n\n  function stripUndefined(obj) {\n    if (Array.isArray(obj)) {\n      return obj.map(stripUndefined);\n    }\n    if (obj && typeof obj === \"object\") {\n      return Object.fromEntries(\n        Object.entries(obj)\n          .filter(([_, v]) => v !== undefined)\n          .map(([k, v]) => [k, stripUndefined(v)]),\n      );\n    }\n    return obj;\n  }\n\n  function finalizeMissingBasics(arr) {\n    let basics = stripUndefined(normalizeMissingBasics(arr));\n    basics = basics.filter(\n      (b) => b && b.name && (b.amount == null || b.amount > 0),\n    );\n    const byName = new Map(\n      basics.map((b) => [String(b.name).toLowerCase().trim(), b]),\n    );\n    const wanted = [\n      { key: \"salt\", def: { name: \"salt\", amount: 1, unit: \"pinch\" } },\n      { key: \"pepper\", def: { name: \"pepper\", amount: 1, unit: \"pinch\" } },\n      { key: \"oil\", def: { name: \"oil\", amount: 1, unit: \"tbsp\" } },\n    ];\n    const result = wanted.map(({ key, def }) => {\n      const existing = byName.get(key);\n      if (!existing) return def;\n      return {\n        name: def.name,\n        amount:\n          existing.amount != null && existing.amount > 0\n            ? existing.amount\n            : def.amount,\n        unit: existing.unit ? existing.unit : def.unit,\n        ...(existing.raw ? { raw: existing.raw } : {}),\n      };\n    });\n    return result;\n  }\n\n  return {\n    json: {\n      title: (r.title || \"\").trim() || `Recipe ${index + 1}`,\n      ingredientsUsed:\n        Array.isArray(r.ingredientsUsed) && r.ingredientsUsed.length\n          ? r.ingredientsUsed\n          : meta.inputIngredients,\n      missingBasics: finalizeMissingBasics(r.missingBasics),\n      steps: flatSteps,\n      stepTitles,\n      stepBodies,\n      helperTodos: Array.isArray(r.helperTodos) ? r.helperTodos : [],\n      servings: Number(meta.servings),\n      energyKcal: NUTRITION_BASE.energyKcal,\n      proteinG: NUTRITION_BASE.proteinG,\n      fatG: NUTRITION_BASE.fatG,\n      carbsG: NUTRITION_BASE.carbsG,\n      createdAt: now,\n      likes: 0,\n      tags: buildDisplayTags(meta),\n      timeCategory: meta.cookingTime ?? null,\n      cuisine: meta.cuisine ?? null,\n      diet: meta.diet ?? null,\n      helpersCount:\n        meta.helpersCount != null ? Number(meta.helpersCount) : null,\n    },\n  };\n});\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -272,
-        784
-      ],
-      "id": "285b5bb0-dd33-41b3-b156-0eaa705362e1",
-      "name": "parse_and_validate_LLM _output(hard rules)"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
-              "leftValue": "={{\n  $json.valid === false &&\n  ['TOO_FEW_STEPS', 'TOO_MANY_STEPS','TOO_MANY_BASICS', 'INGREDIENT_RATIO_TOO_LOW', 'STEPS_TOO_SHORT', 'NON_ENGLISH_STEPS'].includes($json.reason)\n}}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        -64,
-        784
-      ],
-      "id": "05e0f2f3-92d8-4b90-8ea2-b1e211e7b665",
-      "name": "IF_soft_validation_failure"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
-              "leftValue": "={{\n  $json.valid === false &&\n  ['JSON_PARSE_FAILED','NOT_EXACTLY_3_RECIPES'].includes($json.reason)\n}}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        144,
-        800
-      ],
-      "id": "cdb8371a-1fea-447f-bb23-233c22cbc724",
-      "name": "IF_needs_repair_prompt(parse/3 recipes)"
-    },
-    {
-      "parameters": {
-        "jsCode": "const reason = $json.reason ?? \"UNKNOWN\";\nconst llmRaw = $json.llmRaw ?? \"\";\nconst meta = $node[\"build_recipe_prompt(from request)\"].json.meta;\nconst prompt = `\nFix the JSON to satisfy the HARD RULES. Output ONLY valid JSON.\n\nReason for failure: ${reason}\n\nOriginal INPUT ingredients: ${JSON.stringify(meta.inputIngredients)}\nservings: ${meta.servings}\ntimeCategory: ${meta.cookingTime}\ncuisine: ${meta.cuisine}\ndiet: ${meta.diet}\nhelpersCount: ${meta.helpersCount}\n\nPrevious invalid output:\n${llmRaw}\n\nReturn corrected JSON with exactly 3 recipes.\nLanguage: English only for titles and descriptions. Keep dish names/ingredients as-is.\nDescriptions must be 2–4 sentences (45–80 words); do not translate names.\n`;\n\nreturn [{ json: { prompt } }];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        352,
-        624
-      ],
-      "id": "ab920877-519a-47e6-9fb3-a5d0e9e1f566",
-      "name": "build_repair_prompt(include failure reason)"
-    },
-    {
-      "parameters": {
-        "jsCode": "function getText(j) {\n  if (!j) return \"\";\n  if (typeof j.response === \"string\") return j.response;\n  if (typeof j.output_text === \"string\") return j.output_text;\n  const t = j.output?.[0]?.content?.[0]?.text;\n  if (typeof t === \"string\") return t;\n  if (typeof j.text === \"string\") return j.text;\n  if (typeof j.content === \"string\") return j.content;\n  if (typeof j.message?.content === \"string\") return j.message.content;\n  return \"\";\n}\n\nconst raw = getText($json);\nconst meta = $node[\"build_recipe_prompt(from request)\"].json.meta;\nlet jsonOnly = raw;\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\nif (start >= 0 && end >= start) jsonOnly = raw.slice(start, end + 1);\njsonOnly = jsonOnly.replace(/,\\s*}/g, \"}\").replace(/,\\s*]/g, \"]\");\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonOnly);\n} catch {\n  return [{ json: { valid: false, reason: \"JSON_PARSE_FAILED\", llmRaw: raw } }];\n}\nif (parsed.Recipes && !parsed.recipes) {\n  parsed.recipes = parsed.Recipes;\n  delete parsed.Recipes;\n}\n\nconst synonymMap = {\n  reis: [\"reis\", \"rice\"],\n  tofu: [\"tofu\"],\n  sojasauce: [\"sojasauce\", \"soy sauce\", \"soya sauce\"],\n  zwiebel: [\"zwiebel\", \"onion\"],\n  knoblauch: [\"knoblauch\", \"garlic\"],\n  ingwer: [\"ingwer\", \"ginger\"],\n  butter: [\"butter\"],\n  zucker: [\"zucker\", \"sugar\"],\n  mehl: [\"mehl\", \"flour\"],\n  salz: [\"salz\", \"salt\"],\n  pfeffer: [\"pfeffer\", \"pepper\"],\n  öl: [\"öl\", \"oil\"],\n  tomaten: [\"tomaten\", \"tomatoes\", \"tomato\"],\n  huhn: [\"huhn\", \"chicken\"],\n  rindfleisch: [\"rindfleisch\", \"beef\"],\n  schwein: [\"schwein\", \"pork\"],\n  kartoffeln: [\"kartoffeln\", \"potatoes\", \"potato\"],\n  sahne: [\"sahne\", \"cream\"],\n  milch: [\"milch\", \"milk\"],\n};\n\nconst recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];\nif (recipes.length !== 3) {\n  return [\n    {\n      json: {\n        valid: false,\n        reason: \"NOT_EXACTLY_3_RECIPES\",\n        got: recipes.length,\n        llmRaw: raw,\n      },\n    },\n  ];\n}\n\nconst inputSet = new Set();\nfor (const ingRaw of meta.inputIngredients ?? []) {\n  const ing = String(ingRaw).toLowerCase().trim();\n  (synonymMap[ing] ?? [ing]).forEach((s) => inputSet.add(s));\n}\nconst minRequired = Math.ceil((meta.inputIngredients?.length ?? 0) * 0.7);\n\nfunction normalize(x) {\n  return String(x ?? \"\")\n    .toLowerCase()\n    .trim();\n}\n\nconst MIN_STEP_COUNT = 4;\nconst MAX_STEP_COUNT = 6;\nconst germanMarkers = [\n  \" anrichten\",\n  \" servieren\",\n  \" vorbereiten\",\n  \" vorbereitung\",\n  \" zubereiten\",\n  \" würzen\",\n  \" schneiden\",\n  \" braten\",\n  \" kochen\",\n  \" backen\",\n  \" köcheln\",\n  \" fertig\",\n  \" machen\",\n  \" zutaten\",\n  \" rühren\",\n  \" erhitzen\",\n  \" pfanne\",\n  \" topf\",\n  \" minuten\",\n  \" und \",\n  \" mit \",\n  \" für \",\n  \" auf \",\n  \" bei \",\n  \" dann \",\n  \"ä\",\n  \"ö\",\n  \"ü\",\n  \"ß\",\n];\n\nconst MIN_DESC_CHARS = 120;\n\nfor (let idx = 0; idx < recipes.length; idx++) {\n  const r = recipes[idx] ?? {};\n  const steps = Array.isArray(r.steps) ? r.steps : [];\n  if (steps.length < MIN_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_FEW_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  if (steps.length > MAX_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_MANY_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const stepBlob = steps\n    .map((s) => {\n      if (s && typeof s === \"object\")\n        return `${s.title ?? \"\"} ${s.description ?? \"\"}`;\n      return String(s ?? \"\");\n    })\n    .join(\" \")\n    .toLowerCase();\n  if (germanMarkers.some((w) => stepBlob.includes(w))) {\n    return [\n      {\n        json: { valid: false, reason: \"NON_ENGLISH_STEPS\", idx, llmRaw: raw },\n      },\n    ];\n  }\n\n  const tooShort = steps.some((s) => {\n    const d =\n      s && typeof s === \"object\"\n        ? String(s.description ?? \"\")\n        : String(s ?? \"\");\n    return d.trim().length < MIN_DESC_CHARS;\n  });\n  if (tooShort) {\n    return [\n      { json: { valid: false, reason: \"STEPS_TOO_SHORT\", idx, llmRaw: raw } },\n    ];\n  }\n\n  const ingredientsUsed = Array.isArray(r.ingredientsUsed)\n    ? r.ingredientsUsed\n    : [];\n  const usedFromInput = ingredientsUsed\n    .map(normalize)\n    .filter((x) => inputSet.has(x));\n  const uniqueUsed = [...new Set(usedFromInput)];\n  if (uniqueUsed.length < minRequired) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INGREDIENT_RATIO_TOO_LOW\",\n          idx,\n          usedCount: uniqueUsed.length,\n          minRequired,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const hc = Number(meta.helpersCount ?? 1);\n  if (hc < 1 || hc > 3) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INVALID_HELPERS_COUNT_META\",\n          hc,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n}\n\nfunction splitStepText(step) {\n  const text = String(step ?? \"\").trim();\n  if (!text) return { title: \"\", body: \"\" };\n  const parts = text.split(\":\");\n  if (parts.length === 2 && parts[0].length < 40) {\n    return { title: parts[0].trim(), body: parts[1].trim() };\n  }\n  const andIndex = text.toLowerCase().indexOf(\" und \");\n  if (andIndex > 0 && andIndex < text.length - 3) {\n    return {\n      title: text.slice(0, andIndex).trim(),\n      body: text.slice(andIndex + 4).trim(),\n    };\n  }\n  const words = text.split(\" \");\n  if (words.length > 3) {\n    const title = words.slice(0, 3).join(\" \");\n    const body = words.slice(3).join(\" \");\n    return { title, body };\n  }\n  return { title: text, body: \"\" };\n}\n\nfunction buildDisplayTags(meta) {\n  const tags = [];\n  if (meta.diet && meta.diet !== \"None\") {\n    tags.push(meta.diet);\n  }\n  if (meta.cookingTime) {\n    tags.push(meta.cookingTime);\n  }\n  return tags;\n}\n\nconst now = new Date().toISOString();\n\nconst NUTRITION_BASE = {\n  energyKcal: 630,\n  proteinG: 18,\n  fatG: 24,\n  carbsG: 58,\n};\n\nfunction buildNutrition(servings) {\n  const s = Math.max(1, Math.floor(Number(servings) || 1));\n\n  const byPortion = Array.from({ length: s }, (_, i) => {\n    const mult = i + 1;\n    return {\n      portion: mult,\n      energyKcal: Math.round(NUTRITION_BASE.energyKcal * mult),\n      proteinG: round1(NUTRITION_BASE.proteinG * mult),\n      fatG: round1(NUTRITION_BASE.fatG * mult),\n      carbsG: round1(NUTRITION_BASE.carbsG * mult),\n    };\n  });\n\n  return {\n    perServing: { ...NUTRITION_BASE },\n    byPortion,\n    total: byPortion[s - 1],\n  };\n}\n\nreturn recipes.map((r, index) => {\n  const rawSteps = Array.isArray(r.steps) ? r.steps : [];\n  const stepTitles = [];\n  const stepBodies = [];\n  const flatSteps = [];\n\n  for (const s of rawSteps) {\n    if (s && typeof s === \"object\") {\n      const t = String(s.title ?? \"\").trim();\n      const d = String(s.description ?? \"\").trim();\n      const title = t || (d ? splitStepText(d).title : \"\");\n      const body = d || (t ? splitStepText(t).body : \"\");\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    } else {\n      const text = String(s ?? \"\").trim();\n      const { title, body } = splitStepText(text);\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    }\n  }\n\n  function parseBasic(raw) {\n    const s = String(raw ?? \"\").trim();\n    if (!s) return null;\n    let m = s.match(/^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)\\s+(.+)$/);\n    if (m) {\n      return {\n        amount: Number(m[1].replace(\",\", \".\")),\n        unit: m[2],\n        name: m[3].trim(),\n        raw: s,\n      };\n    }\n    m = s.match(/^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)$/);\n    if (m) {\n      return {\n        name: m[1].trim(),\n        amount: Number(m[2].replace(\",\", \".\")),\n        unit: m[3],\n        raw: s,\n      };\n    }\n    return { name: s, raw: s };\n  }\n\n  function normalizeMissingBasics(arr) {\n    const list = Array.isArray(arr) ? arr : [];\n    return list\n      .map((x) => {\n        if (x && typeof x === \"object\") {\n          const name = String(x.name ?? \"\").trim();\n          if (!name) return null;\n          const amount =\n            x.amount == null || x.amount === \"\"\n              ? undefined\n              : Number(String(x.amount).replace(\",\", \".\"));\n          const unit = x.unit != null ? String(x.unit).trim() : undefined;\n\n          return {\n            name,\n            amount: Number.isFinite(amount) ? amount : undefined,\n            unit: unit || undefined,\n            raw: typeof x.raw === \"string\" ? x.raw : undefined,\n          };\n        }\n        return parseBasic(x);\n      })\n      .filter(Boolean)\n      .filter(\n        (v, i, a) =>\n          a.findIndex(\n            (t) =>\n              t.name === v.name && t.amount === v.amount && t.unit === v.unit,\n          ) === i,\n      );\n  }\n\n  function stripUndefined(obj) {\n    if (Array.isArray(obj)) {\n      return obj.map(stripUndefined);\n    }\n    if (obj && typeof obj === \"object\") {\n      return Object.fromEntries(\n        Object.entries(obj)\n          .filter(([_, v]) => v !== undefined)\n          .map(([k, v]) => [k, stripUndefined(v)]),\n      );\n    }\n    return obj;\n  }\n\n  function finalizeMissingBasics(arr) {\n    let basics = stripUndefined(normalizeMissingBasics(arr));\n    basics = basics.filter(\n      (b) => b && b.name && (b.amount == null || b.amount > 0),\n    );\n    const byName = new Map(\n      basics.map((b) => [String(b.name).toLowerCase().trim(), b]),\n    );\n    const wanted = [\n      { key: \"salt\", def: { name: \"salt\", amount: 1, unit: \"pinch\" } },\n      { key: \"pepper\", def: { name: \"pepper\", amount: 1, unit: \"pinch\" } },\n      { key: \"oil\", def: { name: \"oil\", amount: 1, unit: \"tbsp\" } },\n    ];\n    const result = wanted.map(({ key, def }) => {\n      const existing = byName.get(key);\n      if (!existing) return def;\n      return {\n        name: def.name,\n        amount:\n          existing.amount != null && existing.amount > 0\n            ? existing.amount\n            : def.amount,\n        unit: existing.unit ? existing.unit : def.unit,\n        ...(existing.raw ? { raw: existing.raw } : {}),\n      };\n    });\n    return result;\n  }\n\n  return {\n    json: {\n      title: (r.title || \"\").trim() || `Recipe ${index + 1}`,\n      ingredientsUsed:\n        Array.isArray(r.ingredientsUsed) && r.ingredientsUsed.length\n          ? r.ingredientsUsed\n          : meta.inputIngredients,\n      missingBasics: finalizeMissingBasics(r.missingBasics),\n      steps: flatSteps,\n      stepTitles,\n      stepBodies,\n      helperTodos: Array.isArray(r.helperTodos) ? r.helperTodos : [],\n      servings: Number(meta.servings),\n      energyKcal: NUTRITION_BASE.energyKcal,\n      proteinG: NUTRITION_BASE.proteinG,\n      fatG: NUTRITION_BASE.fatG,\n      carbsG: NUTRITION_BASE.carbsG,\n      createdAt: now,\n      likes: 0,\n      tags: buildDisplayTags(meta),\n      timeCategory: meta.cookingTime ?? null,\n      cuisine: meta.cuisine ?? null,\n      diet: meta.diet ?? null,\n      helpersCount:\n        meta.helpersCount != null ? Number(meta.helpersCount) : null,\n    },\n  };\n});\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        864,
-        624
-      ],
-      "id": "a7972503-5f41-41a5-8983-9fe28d2afdb0",
-      "name": "parse_and_validate(after repair)"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
-              "leftValue": "={{ $json.valid !== false && !!$json.title && Array.isArray($json.steps) && $json.steps.length >= 4 }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        304,
-        960
-      ],
-      "id": "75a2badd-5a61-436d-b859-e202abcd4a21",
-      "name": "IF_valid_recipe(after autofix)"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
-              "leftValue": "={{ $json.valid !== false && !!$json.title && Array.isArray($json.steps) && $json.steps.length >= 4 }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1088,
-        624
-      ],
-      "id": "790b234d-08a4-4b31-a56f-aa82820d737a",
-      "name": "IF_valid_recipe(after repair)"
-    },
-    {
-      "parameters": {
-        "authentication": "serviceAccount",
-        "operation": "create",
-        "projectId": "=code-a-cuisine-ba168",
-        "collection": "recipes",
-        "columns": "title, ingredientsUsed, missingBasics, steps, stepTitles, stepBodies, helperTodos, servings, createdAt, likes, tags, timeCategory, cuisine, diet, helpersCount, energyKcal, proteinG, fatG, carbsG"
-      },
-      "name": "Create_recipe_document(initial)",
-      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
-      "position": [
-        384,
-        400
-      ],
-      "typeVersion": 1,
-      "id": "75bdb9e4-848b-4718-9f2a-11ef788b5cfa",
-      "alwaysOutputData": false,
-      "credentials": {
-        "googleApi": {
-          "id": "dWVOhrB3gWsDc7h1",
-          "name": "Google Service Account account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "authentication": "serviceAccount",
-        "operation": "create",
-        "projectId": "=code-a-cuisine-ba168",
-        "collection": "recipes",
-        "columns": "title, ingredientsUsed, missingBasics, steps, stepTitles, stepBodies, helperTodos, servings, createdAt, likes, tags, timeCategory, cuisine, diet, helpersCount, energyKcal, proteinG, fatG, carbsG"
-      },
-      "name": "Create_recipe_document(after autofix)",
-      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
-      "position": [
-        640,
-        944
-      ],
-      "typeVersion": 1,
-      "id": "c139a51a-0a75-4cc6-946b-742f4f5d7c66",
-      "alwaysOutputData": false,
-      "credentials": {
-        "googleApi": {
-          "id": "dWVOhrB3gWsDc7h1",
-          "name": "Google Service Account account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "authentication": "serviceAccount",
-        "operation": "create",
-        "projectId": "=code-a-cuisine-ba168",
-        "collection": "recipes",
-        "columns": "title, ingredientsUsed, missingBasics, steps, stepTitles, stepBodies, helperTodos, servings, createdAt, likes, tags, timeCategory, cuisine, diet, helpersCount, energyKcal, proteinG, fatG, carbsG",
-        "simple": false
-      },
-      "name": "Create_recipe_document(after repair)",
-      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
-      "position": [
-        1328,
-        608
-      ],
-      "typeVersion": 1,
-      "id": "e7b1ecc6-9e79-4275-a5dc-983fc696aaee",
-      "alwaysOutputData": false,
-      "credentials": {
-        "googleApi": {
-          "id": "dWVOhrB3gWsDc7h1",
-          "name": "Google Service Account account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 200 }}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        832,
-        400
-      ],
-      "id": "252dd160-51ea-4169-b4b0-9162d520434e",
-      "name": "Respond_200_OK_recipes"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 200 }}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        1744,
-        608
-      ],
-      "id": "d59ac4e0-d751-445d-aed1-0a3dc37adeec",
-      "name": "Respond_200_OK_recipes_after_repair"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 422 }}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        1696,
-        848
-      ],
-      "id": "bacb1f12-2103-4a9c-a5b9-3ef5ceea3907",
-      "name": "Respond_422_bad_request"
-    },
-    {
-      "parameters": {
         "promptType": "define",
-        "text": "={{$node[\"build_repair_prompt(include failure reason)\"].json.prompt}}",
+        "text": "={{$node[\"build_repair_prompt\"].json.prompt}}",
         "batching": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
@@ -565,45 +67,6 @@
       ],
       "id": "7d235c10-c2f4-4163-99f3-0c2e943ec894",
       "name": "LLM_chain_repair_output"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{$node[\"build_recipe_prompt(from request)\"].json.prompt}}",
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        -576,
-        784
-      ],
-      "id": "9d3e5028-7eb5-472c-9a72-f78ec09718fe",
-      "name": "LLM_Chain_generate_3_recipes_output"
-    },
-    {
-      "parameters": {
-        "authentication": "serviceAccount",
-        "projectId": "code-a-cuisine-ba168",
-        "collection": "usage",
-        "documentId": "={{$json.docId}}"
-      },
-      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
-      "typeVersion": 1.1,
-      "position": [
-        -1504,
-        800
-      ],
-      "id": "a2a9b7a0-ae5c-4906-86fe-72ec897edc8d",
-      "name": "Get_usage_counter",
-      "alwaysOutputData": true,
-      "credentials": {
-        "googleApi": {
-          "id": "dWVOhrB3gWsDc7h1",
-          "name": "Google Service Account account"
-        }
-      },
-      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -628,140 +91,6 @@
           "name": "Google Service Account account"
         }
       }
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 422 }}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        1024,
-        1136
-      ],
-      "id": "77c83f53-45ae-4cd1-a79f-ae5ed61c67a5",
-      "name": "Respond_422_unprocessable_entity2"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
-              "name": "status",
-              "value": "=422",
-              "type": "number"
-            },
-            {
-              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
-              "name": "message",
-              "value": "At least 3 ingredients required",
-              "type": "string"
-            },
-            {
-              "id": "e5ae0a57-2f12-416b-840f-0cba432722a3",
-              "name": "code",
-              "value": "VALIDATION_FAILED",
-              "type": "string"
-            },
-            {
-              "id": "b8a21d90-3a93-4174-89f9-8f0ceedfe9c2",
-              "name": "stage",
-              "value": "validation_failed",
-              "type": "string"
-            },
-            {
-              "id": "cacbfdc5-9319-487a-b005-d7583c2574de",
-              "name": "executionId",
-              "value": "={{$execution.id}}",
-              "type": "string"
-            },
-            {
-              "id": "6ee63dea-81d5-4cb5-aaab-a47794aec5a6",
-              "name": "workflow",
-              "value": "={{$workflow.name}}",
-              "type": "string"
-            },
-            {
-              "id": "f0859ef2-5288-4d3a-a390-559ba152da8c",
-              "name": "timestamp",
-              "value": "={{$now}}",
-              "type": "string"
-            },
-            {
-              "id": "7937b3b2-33c9-4039-b926-24ba6a942ed7",
-              "name": "=stack",
-              "value": "=",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1888,
-        1360
-      ],
-      "id": "59324abf-e597-4c03-9e19-61aea6e40437",
-      "name": "set_error_unprocessable_entity1"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 200 }}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        1040,
-        944
-      ],
-      "id": "77e7a49b-4db3-48a4-9a19-6e72481ad9bc",
-      "name": "Respond_200_OK_recipes_after_autofix"
-    },
-    {
-      "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 422 }}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -1488,
-        1360
-      ],
-      "id": "9b74056d-fd3a-4a7e-b042-9ffb764cd5f4",
-      "name": "Respond_422_unprocessable_entity"
     },
     {
       "parameters": {
@@ -943,29 +272,6 @@
     },
     {
       "parameters": {
-        "options": {
-          "responseCode": "={{ Number($json.status) || 429}}",
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -1184,
-        1120
-      ],
-      "id": "0e2e34f8-1b03-4b9f-94ea-bf8a1f6f95f0",
-      "name": "Respond_429_too_many_requests"
-    },
-    {
-      "parameters": {
         "authentication": "serviceAccount",
         "operation": "create",
         "projectId": "code-a-cuisine-ba168",
@@ -1031,8 +337,275 @@
     },
     {
       "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-recipes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "deb944b7-36a7-42c5-9e36-f84496701ddf",
+      "name": "generate_recipes",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -2256,
+        1136
+      ],
+      "webhookId": "854b0221-203a-4204-bd40-15d367830ea5",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "658b3265-04a0-43b1-8071-914e54b7e013",
+              "leftValue": "={{$json.body.ingredients && $json.body.ingredients.length >= 3}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ac6ceb47-f3c2-4974-b00e-5c028c4b0764",
+              "leftValue": "={{$json.body.servings >= 1 && $json.body.servings <= 12}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2080,
+        1136
+      ],
+      "id": "6ad22f3e-d4bf-4667-bce3-382f33336235",
+      "name": "validate_request_body"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{\n  $json.valid === false &&\n  ['TOO_FEW_STEPS', 'TOO_MANY_STEPS','TOO_MANY_BASICS', 'INGREDIENT_RATIO_TOO_LOW', 'STEPS_TOO_SHORT', 'NON_ENGLISH_STEPS'].includes($json.reason)\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -64,
+        784
+      ],
+      "id": "05e0f2f3-92d8-4b90-8ea2-b1e211e7b665",
+      "name": "soft_validation_failure"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{ $json.valid !== false && !!$json.title && Array.isArray($json.steps) && $json.steps.length >= 4 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        960
+      ],
+      "id": "75a2badd-5a61-436d-b859-e202abcd4a21",
+      "name": "valid_recipe"
+    },
+    {
+      "parameters": {
+        "jsCode": "const reason = $json.reason ?? \"UNKNOWN\";\nconst llmRaw = $json.llmRaw ?? \"\";\nconst meta = $node[\"build_recipe_prompt\"].json.meta;\nconst prompt = `\nFix the JSON to satisfy the HARD RULES. Output ONLY valid JSON.\n\nReason for failure: ${reason}\n\nOriginal INPUT ingredients: ${JSON.stringify(meta.inputIngredients)}\nservings: ${meta.servings}\ntimeCategory: ${meta.cookingTime}\ncuisine: ${meta.cuisine}\ndiet: ${meta.diet}\nhelpersCount: ${meta.helpersCount}\n\nPrevious invalid output:\n${llmRaw}\n\nReturn corrected JSON with exactly 3 recipes.\nLanguage: English only for titles and descriptions. Keep dish names/ingredients as-is.\nDescriptions must be 2–4 sentences (45–80 words); do not translate names.\n`;\n\nreturn [{ json: { prompt } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        624
+      ],
+      "id": "ab920877-519a-47e6-9fb3-a5d0e9e1f566",
+      "name": "build_repair_prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "function getText(j) {\n  if (!j) return \"\";\n  if (typeof j.response === \"string\") return j.response;\n  if (typeof j.output_text === \"string\") return j.output_text;\n  const t = j.output?.[0]?.content?.[0]?.text;\n  if (typeof t === \"string\") return t;\n  if (typeof j.text === \"string\") return j.text;\n  if (typeof j.content === \"string\") return j.content;\n  if (typeof j.message?.content === \"string\") return j.message.content;\n  return \"\";\n}\n\nconst raw = getText($json);\nconst meta = $node[\"build_recipe_prompt\"].json.meta;\nlet jsonOnly = raw;\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\nif (start >= 0 && end >= start) jsonOnly = raw.slice(start, end + 1);\njsonOnly = jsonOnly.replace(/,\\s*}/g, \"}\").replace(/,\\s*]/g, \"]\");\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonOnly);\n} catch {\n  return [{ json: { valid: false, reason: \"JSON_PARSE_FAILED\", llmRaw: raw } }];\n}\nif (parsed.Recipes && !parsed.recipes) {\n  parsed.recipes = parsed.Recipes;\n  delete parsed.Recipes;\n}\n\nconst synonymMap = {\n  reis: [\"reis\", \"rice\"],\n  tofu: [\"tofu\"],\n  sojasauce: [\"sojasauce\", \"soy sauce\", \"soya sauce\"],\n  zwiebel: [\"zwiebel\", \"onion\"],\n  knoblauch: [\"knoblauch\", \"garlic\"],\n  ingwer: [\"ingwer\", \"ginger\"],\n  butter: [\"butter\"],\n  zucker: [\"zucker\", \"sugar\"],\n  mehl: [\"mehl\", \"flour\"],\n  salz: [\"salz\", \"salt\"],\n  pfeffer: [\"pfeffer\", \"pepper\"],\n  öl: [\"öl\", \"oil\"],\n  tomaten: [\"tomaten\", \"tomatoes\", \"tomato\"],\n  huhn: [\"huhn\", \"chicken\"],\n  rindfleisch: [\"rindfleisch\", \"beef\"],\n  schwein: [\"schwein\", \"pork\"],\n  kartoffeln: [\"kartoffeln\", \"potatoes\", \"potato\"],\n  sahne: [\"sahne\", \"cream\"],\n  milch: [\"milch\", \"milk\"],\n};\n\nconst recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];\nif (recipes.length !== 3) {\n  return [\n    {\n      json: {\n        valid: false,\n        reason: \"NOT_EXACTLY_3_RECIPES\",\n        got: recipes.length,\n        llmRaw: raw,\n      },\n    },\n  ];\n}\n\nconst inputSet = new Set();\nfor (const ingRaw of meta.inputIngredients ?? []) {\n  const ing = String(ingRaw).toLowerCase().trim();\n  (synonymMap[ing] ?? [ing]).forEach((s) => inputSet.add(s));\n}\nconst minRequired = Math.ceil((meta.inputIngredients?.length ?? 0) * 0.7);\n\nfunction normalize(x) {\n  return String(x ?? \"\")\n    .toLowerCase()\n    .trim();\n}\n\nconst MIN_STEP_COUNT = 4;\nconst MAX_STEP_COUNT = 6;\nconst germanMarkers = [\n  \" anrichten\",\n  \" servieren\",\n  \" vorbereiten\",\n  \" vorbereitung\",\n  \" zubereiten\",\n  \" würzen\",\n  \" schneiden\",\n  \" braten\",\n  \" kochen\",\n  \" backen\",\n  \" köcheln\",\n  \" fertig\",\n  \" machen\",\n  \" zutaten\",\n  \" rühren\",\n  \" erhitzen\",\n  \" pfanne\",\n  \" topf\",\n  \" minuten\",\n  \" und \",\n  \" mit \",\n  \" für \",\n  \" auf \",\n  \" bei \",\n  \" dann \",\n  \"ä\",\n  \"ö\",\n  \"ü\",\n  \"ß\",\n];\n\nconst MIN_DESC_CHARS = 120;\n\nfor (let idx = 0; idx < recipes.length; idx++) {\n  const r = recipes[idx] ?? {};\n  const steps = Array.isArray(r.steps) ? r.steps : [];\n  if (steps.length < MIN_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_FEW_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  if (steps.length > MAX_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_MANY_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const stepBlob = steps\n    .map((s) => {\n      if (s && typeof s === \"object\")\n        return `${s.title ?? \"\"} ${s.description ?? \"\"}`;\n      return String(s ?? \"\");\n    })\n    .join(\" \")\n    .toLowerCase();\n  if (germanMarkers.some((w) => stepBlob.includes(w))) {\n    return [\n      {\n        json: { valid: false, reason: \"NON_ENGLISH_STEPS\", idx, llmRaw: raw },\n      },\n    ];\n  }\n\n  const tooShort = steps.some((s) => {\n    const d =\n      s && typeof s === \"object\"\n        ? String(s.description ?? \"\")\n        : String(s ?? \"\");\n    return d.trim().length < MIN_DESC_CHARS;\n  });\n  if (tooShort) {\n    return [\n      { json: { valid: false, reason: \"STEPS_TOO_SHORT\", idx, llmRaw: raw } },\n    ];\n  }\n\n  const ingredientsUsed = Array.isArray(r.ingredientsUsed)\n    ? r.ingredientsUsed\n    : [];\n  const usedFromInput = ingredientsUsed\n    .map(normalize)\n    .filter((x) => inputSet.has(x));\n  const uniqueUsed = [...new Set(usedFromInput)];\n  if (uniqueUsed.length < minRequired) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INGREDIENT_RATIO_TOO_LOW\",\n          idx,\n          usedCount: uniqueUsed.length,\n          minRequired,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const hc = Number(meta.helpersCount ?? 1);\n  if (hc < 1 || hc > 3) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INVALID_HELPERS_COUNT_META\",\n          hc,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n}\n\nfunction splitStepText(step) {\n  const text = String(step ?? \"\").trim();\n  if (!text) return { title: \"\", body: \"\" };\n  const parts = text.split(\":\");\n  if (parts.length === 2 && parts[0].length < 40) {\n    return { title: parts[0].trim(), body: parts[1].trim() };\n  }\n  const andIndex = text.toLowerCase().indexOf(\" und \");\n  if (andIndex > 0 && andIndex < text.length - 3) {\n    return {\n      title: text.slice(0, andIndex).trim(),\n      body: text.slice(andIndex + 4).trim(),\n    };\n  }\n  const words = text.split(\" \");\n  if (words.length > 3) {\n    const title = words.slice(0, 3).join(\" \");\n    const body = words.slice(3).join(\" \");\n    return { title, body };\n  }\n  return { title: text, body: \"\" };\n}\n\nfunction buildDisplayTags(meta) {\n  const tags = [];\n  if (meta.diet && meta.diet !== \"None\") {\n    tags.push(meta.diet);\n  }\n  if (meta.cookingTime) {\n    tags.push(meta.cookingTime);\n  }\n  return tags;\n}\n\nconst now = new Date().toISOString();\n\nconst NUTRITION_BASE = {\n  energyKcal: 630,\n  proteinG: 18,\n  fatG: 24,\n  carbsG: 58,\n};\n\nfunction buildNutrition(servings) {\n  const s = Math.max(1, Math.floor(Number(servings) || 1));\n\n  const byPortion = Array.from({ length: s }, (_, i) => {\n    const mult = i + 1;\n    return {\n      portion: mult,\n      energyKcal: Math.round(NUTRITION_BASE.energyKcal * mult),\n      proteinG: round1(NUTRITION_BASE.proteinG * mult),\n      fatG: round1(NUTRITION_BASE.fatG * mult),\n      carbsG: round1(NUTRITION_BASE.carbsG * mult),\n    };\n  });\n\n  return {\n    perServing: { ...NUTRITION_BASE },\n    byPortion,\n    total: byPortion[s - 1],\n  };\n}\n\nreturn recipes.map((r, index) => {\n  const rawSteps = Array.isArray(r.steps) ? r.steps : [];\n  const stepTitles = [];\n  const stepBodies = [];\n  const flatSteps = [];\n\n  for (const s of rawSteps) {\n    if (s && typeof s === \"object\") {\n      const t = String(s.title ?? \"\").trim();\n      const d = String(s.description ?? \"\").trim();\n      const title = t || (d ? splitStepText(d).title : \"\");\n      const body = d || (t ? splitStepText(t).body : \"\");\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    } else {\n      const text = String(s ?? \"\").trim();\n      const { title, body } = splitStepText(text);\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    }\n  }\n\n  function parseBasic(raw) {\n    const s = String(raw ?? \"\").trim();\n    if (!s) return null;\n    let m = s.match(/^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)\\s+(.+)$/);\n    if (m) {\n      return {\n        amount: Number(m[1].replace(\",\", \".\")),\n        unit: m[2],\n        name: m[3].trim(),\n        raw: s,\n      };\n    }\n    m = s.match(/^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)$/);\n    if (m) {\n      return {\n        name: m[1].trim(),\n        amount: Number(m[2].replace(\",\", \".\")),\n        unit: m[3],\n        raw: s,\n      };\n    }\n    return { name: s, raw: s };\n  }\n\n  function normalizeMissingBasics(arr) {\n    const list = Array.isArray(arr) ? arr : [];\n    return list\n      .map((x) => {\n        if (x && typeof x === \"object\") {\n          const name = String(x.name ?? \"\").trim();\n          if (!name) return null;\n          const amount =\n            x.amount == null || x.amount === \"\"\n              ? undefined\n              : Number(String(x.amount).replace(\",\", \".\"));\n          const unit = x.unit != null ? String(x.unit).trim() : undefined;\n\n          return {\n            name,\n            amount: Number.isFinite(amount) ? amount : undefined,\n            unit: unit || undefined,\n            raw: typeof x.raw === \"string\" ? x.raw : undefined,\n          };\n        }\n        return parseBasic(x);\n      })\n      .filter(Boolean)\n      .filter(\n        (v, i, a) =>\n          a.findIndex(\n            (t) =>\n              t.name === v.name && t.amount === v.amount && t.unit === v.unit,\n          ) === i,\n      );\n  }\n\n  function stripUndefined(obj) {\n    if (Array.isArray(obj)) {\n      return obj.map(stripUndefined);\n    }\n    if (obj && typeof obj === \"object\") {\n      return Object.fromEntries(\n        Object.entries(obj)\n          .filter(([_, v]) => v !== undefined)\n          .map(([k, v]) => [k, stripUndefined(v)]),\n      );\n    }\n    return obj;\n  }\n\n  function finalizeMissingBasics(arr) {\n    let basics = stripUndefined(normalizeMissingBasics(arr));\n    basics = basics.filter(\n      (b) => b && b.name && (b.amount == null || b.amount > 0),\n    );\n    const byName = new Map(\n      basics.map((b) => [String(b.name).toLowerCase().trim(), b]),\n    );\n    const wanted = [\n      { key: \"salt\", def: { name: \"salt\", amount: 1, unit: \"pinch\" } },\n      { key: \"pepper\", def: { name: \"pepper\", amount: 1, unit: \"pinch\" } },\n      { key: \"oil\", def: { name: \"oil\", amount: 1, unit: \"tbsp\" } },\n    ];\n    const result = wanted.map(({ key, def }) => {\n      const existing = byName.get(key);\n      if (!existing) return def;\n      return {\n        name: def.name,\n        amount:\n          existing.amount != null && existing.amount > 0\n            ? existing.amount\n            : def.amount,\n        unit: existing.unit ? existing.unit : def.unit,\n        ...(existing.raw ? { raw: existing.raw } : {}),\n      };\n    });\n    return result;\n  }\n\n  return {\n    json: {\n      title: (r.title || \"\").trim() || `Recipe ${index + 1}`,\n      ingredientsUsed:\n        Array.isArray(r.ingredientsUsed) && r.ingredientsUsed.length\n          ? r.ingredientsUsed\n          : meta.inputIngredients,\n      missingBasics: finalizeMissingBasics(r.missingBasics),\n      steps: flatSteps,\n      stepTitles,\n      stepBodies,\n      helperTodos: Array.isArray(r.helperTodos) ? r.helperTodos : [],\n      servings: Number(meta.servings),\n      energyKcal: NUTRITION_BASE.energyKcal,\n      proteinG: NUTRITION_BASE.proteinG,\n      fatG: NUTRITION_BASE.fatG,\n      carbsG: NUTRITION_BASE.carbsG,\n      createdAt: now,\n      likes: 0,\n      tags: buildDisplayTags(meta),\n      timeCategory: meta.cookingTime ?? null,\n      cuisine: meta.cuisine ?? null,\n      diet: meta.diet ?? null,\n      helpersCount:\n        meta.helpersCount != null ? Number(meta.helpersCount) : null,\n    },\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        784
+      ],
+      "id": "285b5bb0-dd33-41b3-b156-0eaa705362e1",
+      "name": "parse_and_validate_LLM _output"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$node[\"build_recipe_prompt\"].json.prompt}}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -576,
+        784
+      ],
+      "id": "9d3e5028-7eb5-472c-9a72-f78ec09718fe",
+      "name": "LLM_chain_generate_3_recipes_output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $(\"generate_recipes\").first().json.body ?? {};\nconst ingredients = Array.isArray(body.ingredients) ? body.ingredients : [];\nconst servings = Number(body.servings ?? 2);\nconst preferences = body.preferences ?? {};\nconst helpers = body.helpers ?? {};\nconst helpersCount = Math.max(1, Math.min(3, Number(helpers.count ?? 1)));\nconst cookingTime = preferences.cookingTime ?? \"Medium\";\nconst cuisine = preferences.cuisine ?? \"Fusion\";\nconst diet = preferences.diet ?? \"None\";\nconst inputIngredients = ingredients\n  .map((s) => String(s).trim())\n  .filter(Boolean);\n\nconst prompt = `\nYou are a recipe generator. Output ONLY valid JSON. No markdown.\n\nINPUT:\n- ingredients: ${JSON.stringify(inputIngredients)}\n- servings: ${servings}\n- timeCategory: ${cookingTime}\n- cuisine: ${cuisine}\n- diet: ${diet}\n- helpersCount: ${helpersCount}\n\nHARD RULES:\n0) Language: English only for all step titles and descriptions.\n   Exception: keep original dish/ingredient names as‑is; do not translate them.\n1) Generate exactly 3 recipes.\n2) Each recipe must use at least 70% of the INPUT ingredients.\n3) Each recipe may contain at most 3 missingBasics.\n4) Each recipe must have between 4 and 6 steps.\n5) Split helper tasks among helpers 1..helpersCount.\n6) Each step MUST have:\n   - a short title (2–6 words)\n   - a longer description (2–4 sentences, 45–80 words).\n\nOUTPUT JSON SCHEMA:\n{\n  \"recipes\": [\n    {\n      \"title\": \"string\",\n      \"ingredientsUsed\": [\"string\"],\n      \"missingBasics\": [\n  { \"name\": \"string\", \"amount\": 0, \"unit\": \"string\" }\n],\n      \"steps\": [\n        {\n          \"title\": \"short step title, 2-6 words\",\n          \"description\": \"detailed step description, 2-4 sentences, 45-80 words\"\n        }\n      ],\n      \"helperTodos\": [\n        { \"helper\": 1, \"tasks\": [\"string (max 8 words each)\"] }\n      ]\n    }\n  ]\n}\n\nIMPORTANT FORMATTING RULES:\n- Return EXACTLY one JSON object.\n- Generate exactly 3 recipes.\n- If you cannot comply, return exactly:\n{ \"recipes\": [] }\n- The first character MUST be '{' and the last character MUST be '}'.\n- Do NOT include any explanation, comments or markdown.\n- All step descriptions must be plain text (no line breaks, no bullet points).\n\nRemember: exactly 3 recipes, valid JSON only.\n`;\n\nreturn [\n  {\n    json: {\n      prompt,\n      meta: {\n        inputIngredients,\n        servings,\n        cookingTime,\n        cuisine,\n        diet,\n        helpersCount,\n      },\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        784
+      ],
+      "id": "89ef8479-dc26-450a-ae25-987a1a06f8f9",
+      "name": "build_recipe_prompt"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{$json.allowed}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1184,
+        800
+      ],
+      "id": "33764ac6-084e-4b28-9a7a-028bbd7f8313",
+      "name": "under_limit"
+    },
+    {
+      "parameters": {
+        "jsCode": "const usage = ($json && typeof $json === \"object\") ? $json : {};\nconst current = Number(usage.count ?? 0);\n\nconst meta = $node[\"build_usage_key\"].json;\nconst next = current + 1;\n\nreturn [{\n json: {\n  ...meta,\n  current,\n  next,\n  allowed: current < meta.limit,\n  count: next,\n  updatedAt: meta.nowIso,\n}\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        800
+      ],
+      "id": "c1f509b8-bd10-4510-852c-408e66ba1f53",
+      "name": "compute_count"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "projectId": "code-a-cuisine-ba168",
+        "collection": "usage",
+        "documentId": "={{$json.docId}}"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        -1504,
+        800
+      ],
+      "id": "a2a9b7a0-ae5c-4906-86fe-72ec897edc8d",
+      "name": "get_usage_counter",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $input.first()?.json ?? {};\nconst body = (req.body && typeof req.body === \"object\") ? req.body : req;\n\nconst clientId = String(body.clientId ?? \"\").trim();\n\nif (!clientId) {\n  return [{ json: { ok: false, status: 429, message: \"Missing clientId\" } }];\n}\n\nconst now = new Date();\nconst day = now.toISOString().slice(0, 10);\nconst docId = `${clientId}_${day}`;\n\nreturn [{\n  json: {\n    ok: true,\n    clientId,\n    day,\n    docId,\n    limit: 10,\n    nowIso: now.toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1872,
+        928
+      ],
+      "id": "37f16db1-cf65-4d43-81c5-f1d03d5698ac",
+      "name": "build_usage_key"
+    },
+    {
+      "parameters": {
         "options": {
-          "responseCode": "={{ Number($json.status) || 429 }}",
+          "responseCode": "={{ Number($json.status) || 422 }}",
           "responseHeaders": {
             "entries": [
               {
@@ -1046,11 +619,34 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -592,
+        -1488,
+        1360
+      ],
+      "id": "9b74056d-fd3a-4a7e-b042-9ffb764cd5f4",
+      "name": "respond_422_unprocessable_entity"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 429}}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1184,
         1120
       ],
-      "id": "f7c8a47f-7710-40a9-9abd-045973e85a13",
-      "name": "Respond_429_error_JSON"
+      "id": "0e2e34f8-1b03-4b9f-94ea-bf8a1f6f95f0",
+      "name": "respond_429_too_many_requests"
     },
     {
       "parameters": {
@@ -1121,7 +717,476 @@
         1120
       ],
       "id": "8a8f02bf-413c-4739-999d-10891eb88cb4",
-      "name": "set_error_bad_request(missing clientId)"
+      "name": "set_error_bad_request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{$json.ok}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1696,
+        928
+      ],
+      "id": "cdf42984-4eb5-4522-aef3-472ad9b4a6a0",
+      "name": "has_user"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 429 }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -592,
+        1120
+      ],
+      "id": "f7c8a47f-7710-40a9-9abd-045973e85a13",
+      "name": "respond_429_error_json"
+    },
+    {
+      "parameters": {
+        "jsCode": "const meta = $node[\"build_recipe_prompt\"].json.meta;\nconst raw = $json.llmRaw ?? \"\";\n\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\nconst MIN_STEP_COUNT = 4;\nconst MAX_STEP_COUNT = 6;\nconst extraTitles = [\n  \"Prep final components\",\n  \"Build the base flavor\",\n  \"Combine and balance\",\n  \"Finish and plate\",\n  \"Quick quality check\",\n  \"Serve and enjoy\",\n];\n\nconst extraLines = [\n  \"Focus on consistent heat and steady stirring so nothing scorches while flavors deepen.\",\n  \"Taste as you go and adjust salt, acidity, and richness in small steps for a clean finish.\",\n  \"Look for clear cues: aroma becomes fragrant, texture turns cohesive, and moisture reduces slightly.\",\n  \"Keep movements efficient: scrape the pan bottom and fold ingredients gently to avoid breaking them.\",\n];\nif (start === -1 || end === -1 || end <= start) {\n  return [\n    { json: { valid: false, reason: \"AUTOFIX_NO_JSON_FOUND\", llmRaw: raw } },\n  ];\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw.slice(start, end + 1));\n} catch (e) {\n  return [\n    {\n      json: { valid: false, reason: \"AUTOFIX_JSON_PARSE_FAILED\", llmRaw: raw },\n    },\n  ];\n}\nif (parsed.Recipes && !parsed.recipes) {\n  parsed.recipes = parsed.Recipes;\n  delete parsed.Recipes;\n}\nconst recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];\nif (recipes.length !== 3) {\n  return [\n    {\n      json: {\n        valid: false,\n        reason: \"AUTOFIX_NOT_3_RECIPES\",\n        got: recipes.length,\n        llmRaw: raw,\n      },\n    },\n  ];\n}\nfunction ensureStepObject(s, i, recipeTitle) {\n  if (s && typeof s === \"object\") {\n    return {\n      title: String(s.title ?? \"\").trim(),\n      description: String(s.description ?? \"\").trim(),\n    };\n  }\n  const text = String(s ?? \"\").trim();\n  return {\n    title: text ? text.split(\".\")[0].slice(0, 40) : `Step ${i + 1}`,\n    description: text,\n  };\n}\n\nfunction expandDescription(desc, recipeTitle, i) {\n  const d = String(desc ?? \"\").trim();\n  if (d.length >= 120) return d;\n  const variants = [\n    \"Keep the heat moderate and stir often so flavors develop without burning.\",\n    \"Aim for even cooking: adjust the heat as needed and watch for a light golden color.\",\n    \"Taste and adjust seasoning gradually to balance salt, acidity, and richness.\",\n    \"Look for clear cues: the aroma should turn fragrant and the texture should feel cohesive.\",\n  ];\n  const v = variants[(recipeTitle.length + i) % variants.length];\n  if (!d) {\n    return `Work on \\\"${recipeTitle}\\\" and complete this step carefully. ${v}`;\n  }\n  return `${d} ${v}`;\n}\n\nfor (const r of recipes) {\n  const recipeTitle = String(r.title ?? \"the dish\").trim() || \"the dish\";\n  let steps = Array.isArray(r.steps) ? r.steps : [];\n  steps = steps.map((s, i) => ensureStepObject(s, i, recipeTitle));\n  while (steps.length < MIN_STEP_COUNT) {\n    const i = steps.length;\n    steps.push({\n      title: extraTitles[i % extraTitles.length],\n      description: `Continue working on \"${recipeTitle}\" to prepare the next stage. ${extraLines[i % extraLines.length]}`,\n    });\n  }\n  steps = steps.slice(0, MAX_STEP_COUNT);\n  steps = steps.map((s, i) => ({\n    title: s.title || `Step ${i + 1}`,\n    description: expandDescription(s.description, recipeTitle, i),\n  }));\n  r.steps = steps;\n  if (Array.isArray(r.missingBasics)) {\n    r.missingBasics = r.missingBasics.slice(0, 3);\n  } else {\n    r.missingBasics = [];\n  }\n}\n\nfunction splitStepText(step) {\n  const text = String(step ?? \"\").trim();\n  if (!text) return { title: \"\", body: \"\" };\n  const parts = text.split(\":\");\n  if (parts.length === 2 && parts[0].length < 40) {\n    return { title: parts[0].trim(), body: parts[1].trim() };\n  }\n  const andIndex = text.toLowerCase().indexOf(\" und \");\n  if (andIndex > 0 && andIndex < text.length - 3) {\n    return {\n      title: text.slice(0, andIndex).trim(),\n      body: text.slice(andIndex + 4).trim(),\n    };\n  }\n  const words = text.split(\" \");\n  if (words.length > 3) {\n    const title = words.slice(0, 3).join(\" \");\n    const body = words.slice(3).join(\" \");\n    return { title, body };\n  }\n  return { title: text, body: \"\" };\n}\n\nfunction buildDisplayTags(meta) {\n  const tags = [];\n  if (meta.diet && meta.diet !== \"None\") tags.push(meta.diet);\n  if (meta.cookingTime) tags.push(meta.cookingTime);\n  return tags;\n}\n\nconst now = new Date().toISOString();\n\nconst NUTRITION_BASE = {\n  energyKcal: 630,\n  proteinG: 18,\n  fatG: 24,\n  carbsG: 58,\n};\n\nfunction buildNutrition(servings) {\n  const s = Math.max(1, Math.floor(Number(servings) || 1));\n  const byPortion = Array.from({ length: s }, (_, i) => {\n    const mult = i + 1;\n    return {\n      portion: mult,\n      energyKcal: Math.round(NUTRITION_BASE.energyKcal * mult),\n      proteinG: round1(NUTRITION_BASE.proteinG * mult),\n      fatG: round1(NUTRITION_BASE.fatG * mult),\n      carbsG: round1(NUTRITION_BASE.carbsG * mult),\n    };\n  });\n  return {\n    perServing: { ...NUTRITION_BASE },\n    byPortion,\n    total: byPortion[s - 1],\n  };\n}\n\nfunction parseBasic(raw) {\n  const s = String(raw ?? \"\").trim();\n  if (!s) return null;\n  let m = s.match(/^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)\\s+(.+)$/);\n  if (m) {\n    return {\n      amount: Number(m[1].replace(\",\", \".\")),\n      unit: m[2],\n      name: m[3].trim(),\n      raw: s,\n    };\n  }\n  m = s.match(/^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)$/);\n  if (m) {\n    return {\n      name: m[1].trim(),\n      amount: Number(m[2].replace(\",\", \".\")),\n      unit: m[3],\n      raw: s,\n    };\n  }\n  return { name: s, raw: s };\n}\n\nfunction normalizeMissingBasics(arr) {\n  const list = Array.isArray(arr) ? arr : [];\n  return list\n    .map((x) => {\n      if (x && typeof x === \"object\") {\n        const name = String(x.name ?? \"\").trim();\n        if (!name) return null;\n        const amount =\n          x.amount == null || x.amount === \"\"\n            ? undefined\n            : Number(String(x.amount).replace(\",\", \".\"));\n        const unit = x.unit != null ? String(x.unit).trim() : undefined;\n        return {\n          name,\n          amount: Number.isFinite(amount) ? amount : undefined,\n          unit: unit || undefined,\n          raw: typeof x.raw === \"string\" ? x.raw : undefined,\n        };\n      }\n      return parseBasic(x);\n    })\n    .filter(Boolean)\n    .filter(\n      (v, i, a) =>\n        a.findIndex(\n          (t) =>\n            t.name === v.name && t.amount === v.amount && t.unit === v.unit,\n        ) === i,\n    );\n}\n\nfunction stripUndefined(obj) {\n  if (Array.isArray(obj)) {\n    return obj.map(stripUndefined);\n  }\n  if (obj && typeof obj === \"object\") {\n    return Object.fromEntries(\n      Object.entries(obj)\n        .filter(([_, v]) => v !== undefined)\n        .map(([k, v]) => [k, stripUndefined(v)]),\n    );\n  }\n  return obj;\n}\n\nfunction finalizeMissingBasics(arr) {\n  let basics = stripUndefined(normalizeMissingBasics(arr));\n  basics = basics.filter(\n    (b) => b && b.name && (b.amount == null || b.amount > 0),\n  );\n  const byName = new Map(\n    basics.map((b) => [String(b.name).toLowerCase().trim(), b]),\n  );\n  const wanted = [\n    { key: \"salt\", def: { name: \"salt\", amount: 1, unit: \"pinch\" } },\n    { key: \"pepper\", def: { name: \"pepper\", amount: 1, unit: \"pinch\" } },\n    { key: \"oil\", def: { name: \"oil\", amount: 1, unit: \"tbsp\" } },\n  ];\n  const result = wanted.map(({ key, def }) => {\n    const existing = byName.get(key);\n    if (!existing) return def;\n    return {\n      name: def.name,\n      amount:\n        existing.amount != null && existing.amount > 0\n          ? existing.amount\n          : def.amount,\n      unit: existing.unit ? existing.unit : def.unit,\n      ...(existing.raw ? { raw: existing.raw } : {}),\n    };\n  });\n  return result;\n}\n\nreturn recipes.map((r, index) => {\n  const rawSteps = Array.isArray(r.steps) ? r.steps : [];\n  const stepTitles = [];\n  const stepBodies = [];\n  const flatSteps = [];\n\n  for (const s of rawSteps) {\n    if (s && typeof s === \"object\") {\n      const t = String(s.title ?? \"\").trim();\n      const d = String(s.description ?? \"\").trim();\n      const title = t || (d ? splitStepText(d).title : \"\");\n      const body = d || (t ? splitStepText(t).body : \"\");\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    } else {\n      const text = String(s ?? \"\").trim();\n      const { title, body } = splitStepText(text);\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    }\n  }\n\n  return {\n    json: {\n      title: (r.title || \"\").trim() || `Recipe ${index + 1}`,\n      ingredientsUsed:\n        Array.isArray(r.ingredientsUsed) && r.ingredientsUsed.length\n          ? r.ingredientsUsed\n          : meta.inputIngredients,\n      missingBasics: finalizeMissingBasics(r.missingBasics),\n      steps: flatSteps,\n      stepTitles,\n      stepBodies,\n      helperTodos: Array.isArray(r.helperTodos) ? r.helperTodos : [],\n      servings: Number(meta.servings),\n      energyKcal: NUTRITION_BASE.energyKcal,\n      proteinG: NUTRITION_BASE.proteinG,\n      fatG: NUTRITION_BASE.fatG,\n      carbsG: NUTRITION_BASE.carbsG,\n      createdAt: now,\n      likes: 0,\n      tags: buildDisplayTags(meta),\n      timeCategory: meta.cookingTime ?? null,\n      cuisine: meta.cuisine ?? null,\n      diet: meta.diet ?? null,\n      helpersCount:\n        meta.helpersCount != null ? Number(meta.helpersCount) : null,\n    },\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        400
+      ],
+      "id": "02542977-0173-449f-9c45-ec7f46052de1",
+      "name": "autofix_soft_issues"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "create",
+        "projectId": "=code-a-cuisine-ba168",
+        "collection": "recipes",
+        "columns": "title, ingredientsUsed, missingBasics, steps, stepTitles, stepBodies, helperTodos, servings, createdAt, likes, tags, timeCategory, cuisine, diet, helpersCount, energyKcal, proteinG, fatG, carbsG"
+      },
+      "name": "create_recipe_document",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "position": [
+        384,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "75bdb9e4-848b-4718-9f2a-11ef788b5cfa",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 200 }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        400
+      ],
+      "id": "252dd160-51ea-4169-b4b0-9162d520434e",
+      "name": "respond_200_OK_recipes"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": "=422",
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "Recipe output could not be repaired to valid format.",
+              "type": "string"
+            },
+            {
+              "id": "e5ae0a57-2f12-416b-840f-0cba432722a3",
+              "name": "code",
+              "value": "REPAIR_FAILED",
+              "type": "string"
+            },
+            {
+              "id": "b8a21d90-3a93-4174-89f9-8f0ceedfe9c2",
+              "name": "stage",
+              "value": "repair_failed",
+              "type": "string"
+            },
+            {
+              "id": "cacbfdc5-9319-487a-b005-d7583c2574de",
+              "name": "executionId",
+              "value": "={{$execution.id}}",
+              "type": "string"
+            },
+            {
+              "id": "6ee63dea-81d5-4cb5-aaab-a47794aec5a6",
+              "name": "workflow",
+              "value": "={{$workflow.name}}",
+              "type": "string"
+            },
+            {
+              "id": "f0859ef2-5288-4d3a-a390-559ba152da8c",
+              "name": "timestamp",
+              "value": "={{$now}}",
+              "type": "string"
+            },
+            {
+              "id": "7937b3b2-33c9-4039-b926-24ba6a942ed7",
+              "name": "=stack",
+              "value": "=",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        1136
+      ],
+      "id": "bf903d4c-d6c8-4706-bdb9-ab6fde10e5b9",
+      "name": "set_error_repair_failed"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 200 }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1056,
+        944
+      ],
+      "id": "77e7a49b-4db3-48a4-9a19-6e72481ad9bc",
+      "name": "respond_200_OK_recipes_after_autofix"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 422 }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        1136
+      ],
+      "id": "77c83f53-45ae-4cd1-a79f-ae5ed61c67a5",
+      "name": "respond_422_unprocessable_entity2"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "create",
+        "projectId": "=code-a-cuisine-ba168",
+        "collection": "recipes",
+        "columns": "title, ingredientsUsed, missingBasics, steps, stepTitles, stepBodies, helperTodos, servings, createdAt, likes, tags, timeCategory, cuisine, diet, helpersCount, energyKcal, proteinG, fatG, carbsG"
+      },
+      "name": "create_recipe_document_after_autofix",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "position": [
+        640,
+        944
+      ],
+      "typeVersion": 1,
+      "id": "c139a51a-0a75-4cc6-946b-742f4f5d7c66",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function getText(j) {\n  if (!j) return \"\";\n  if (typeof j.response === \"string\") return j.response;\n  if (typeof j.output_text === \"string\") return j.output_text;\n  const t = j.output?.[0]?.content?.[0]?.text;\n  if (typeof t === \"string\") return t;\n  if (typeof j.text === \"string\") return j.text;\n  if (typeof j.content === \"string\") return j.content;\n  if (typeof j.message?.content === \"string\") return j.message.content;\n  return \"\";\n}\n\nconst raw = getText($json);\nconst meta = $node[\"build_recipe_prompt\"].json.meta;\nlet jsonOnly = raw;\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\nif (start >= 0 && end >= start) jsonOnly = raw.slice(start, end + 1);\njsonOnly = jsonOnly.replace(/,\\s*}/g, \"}\").replace(/,\\s*]/g, \"]\");\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonOnly);\n} catch {\n  return [{ json: { valid: false, reason: \"JSON_PARSE_FAILED\", llmRaw: raw } }];\n}\nif (parsed.Recipes && !parsed.recipes) {\n  parsed.recipes = parsed.Recipes;\n  delete parsed.Recipes;\n}\n\nconst synonymMap = {\n  reis: [\"reis\", \"rice\"],\n  tofu: [\"tofu\"],\n  sojasauce: [\"sojasauce\", \"soy sauce\", \"soya sauce\"],\n  zwiebel: [\"zwiebel\", \"onion\"],\n  knoblauch: [\"knoblauch\", \"garlic\"],\n  ingwer: [\"ingwer\", \"ginger\"],\n  butter: [\"butter\"],\n  zucker: [\"zucker\", \"sugar\"],\n  mehl: [\"mehl\", \"flour\"],\n  salz: [\"salz\", \"salt\"],\n  pfeffer: [\"pfeffer\", \"pepper\"],\n  öl: [\"öl\", \"oil\"],\n  tomaten: [\"tomaten\", \"tomatoes\", \"tomato\"],\n  huhn: [\"huhn\", \"chicken\"],\n  rindfleisch: [\"rindfleisch\", \"beef\"],\n  schwein: [\"schwein\", \"pork\"],\n  kartoffeln: [\"kartoffeln\", \"potatoes\", \"potato\"],\n  sahne: [\"sahne\", \"cream\"],\n  milch: [\"milch\", \"milk\"],\n};\n\nconst recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];\nif (recipes.length !== 3) {\n  return [\n    {\n      json: {\n        valid: false,\n        reason: \"NOT_EXACTLY_3_RECIPES\",\n        got: recipes.length,\n        llmRaw: raw,\n      },\n    },\n  ];\n}\n\nconst inputSet = new Set();\nfor (const ingRaw of meta.inputIngredients ?? []) {\n  const ing = String(ingRaw).toLowerCase().trim();\n  (synonymMap[ing] ?? [ing]).forEach((s) => inputSet.add(s));\n}\nconst minRequired = Math.ceil((meta.inputIngredients?.length ?? 0) * 0.7);\n\nfunction normalize(x) {\n  return String(x ?? \"\")\n    .toLowerCase()\n    .trim();\n}\n\nconst MIN_STEP_COUNT = 4;\nconst MAX_STEP_COUNT = 6;\nconst germanMarkers = [\n  \" anrichten\",\n  \" servieren\",\n  \" vorbereiten\",\n  \" vorbereitung\",\n  \" zubereiten\",\n  \" würzen\",\n  \" schneiden\",\n  \" braten\",\n  \" kochen\",\n  \" backen\",\n  \" köcheln\",\n  \" fertig\",\n  \" machen\",\n  \" zutaten\",\n  \" rühren\",\n  \" erhitzen\",\n  \" pfanne\",\n  \" topf\",\n  \" minuten\",\n  \" und \",\n  \" mit \",\n  \" für \",\n  \" auf \",\n  \" bei \",\n  \" dann \",\n  \"ä\",\n  \"ö\",\n  \"ü\",\n  \"ß\",\n];\n\nconst MIN_DESC_CHARS = 120;\n\nfor (let idx = 0; idx < recipes.length; idx++) {\n  const r = recipes[idx] ?? {};\n  const steps = Array.isArray(r.steps) ? r.steps : [];\n  if (steps.length < MIN_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_FEW_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  if (steps.length > MAX_STEP_COUNT) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"TOO_MANY_STEPS\",\n          idx,\n          stepsCount: steps.length,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const stepBlob = steps\n    .map((s) => {\n      if (s && typeof s === \"object\")\n        return `${s.title ?? \"\"} ${s.description ?? \"\"}`;\n      return String(s ?? \"\");\n    })\n    .join(\" \")\n    .toLowerCase();\n  if (germanMarkers.some((w) => stepBlob.includes(w))) {\n    return [\n      {\n        json: { valid: false, reason: \"NON_ENGLISH_STEPS\", idx, llmRaw: raw },\n      },\n    ];\n  }\n\n  const tooShort = steps.some((s) => {\n    const d =\n      s && typeof s === \"object\"\n        ? String(s.description ?? \"\")\n        : String(s ?? \"\");\n    return d.trim().length < MIN_DESC_CHARS;\n  });\n  if (tooShort) {\n    return [\n      { json: { valid: false, reason: \"STEPS_TOO_SHORT\", idx, llmRaw: raw } },\n    ];\n  }\n\n  const ingredientsUsed = Array.isArray(r.ingredientsUsed)\n    ? r.ingredientsUsed\n    : [];\n  const usedFromInput = ingredientsUsed\n    .map(normalize)\n    .filter((x) => inputSet.has(x));\n  const uniqueUsed = [...new Set(usedFromInput)];\n  if (uniqueUsed.length < minRequired) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INGREDIENT_RATIO_TOO_LOW\",\n          idx,\n          usedCount: uniqueUsed.length,\n          minRequired,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n\n  const hc = Number(meta.helpersCount ?? 1);\n  if (hc < 1 || hc > 3) {\n    return [\n      {\n        json: {\n          valid: false,\n          reason: \"INVALID_HELPERS_COUNT_META\",\n          hc,\n          llmRaw: raw,\n        },\n      },\n    ];\n  }\n}\n\nfunction splitStepText(step) {\n  const text = String(step ?? \"\").trim();\n  if (!text) return { title: \"\", body: \"\" };\n  const parts = text.split(\":\");\n  if (parts.length === 2 && parts[0].length < 40) {\n    return { title: parts[0].trim(), body: parts[1].trim() };\n  }\n  const andIndex = text.toLowerCase().indexOf(\" und \");\n  if (andIndex > 0 && andIndex < text.length - 3) {\n    return {\n      title: text.slice(0, andIndex).trim(),\n      body: text.slice(andIndex + 4).trim(),\n    };\n  }\n  const words = text.split(\" \");\n  if (words.length > 3) {\n    const title = words.slice(0, 3).join(\" \");\n    const body = words.slice(3).join(\" \");\n    return { title, body };\n  }\n  return { title: text, body: \"\" };\n}\n\nfunction buildDisplayTags(meta) {\n  const tags = [];\n  if (meta.diet && meta.diet !== \"None\") {\n    tags.push(meta.diet);\n  }\n  if (meta.cookingTime) {\n    tags.push(meta.cookingTime);\n  }\n  return tags;\n}\n\nconst now = new Date().toISOString();\n\nconst NUTRITION_BASE = {\n  energyKcal: 630,\n  proteinG: 18,\n  fatG: 24,\n  carbsG: 58,\n};\n\nfunction buildNutrition(servings) {\n  const s = Math.max(1, Math.floor(Number(servings) || 1));\n\n  const byPortion = Array.from({ length: s }, (_, i) => {\n    const mult = i + 1;\n    return {\n      portion: mult,\n      energyKcal: Math.round(NUTRITION_BASE.energyKcal * mult),\n      proteinG: round1(NUTRITION_BASE.proteinG * mult),\n      fatG: round1(NUTRITION_BASE.fatG * mult),\n      carbsG: round1(NUTRITION_BASE.carbsG * mult),\n    };\n  });\n\n  return {\n    perServing: { ...NUTRITION_BASE },\n    byPortion,\n    total: byPortion[s - 1],\n  };\n}\n\nreturn recipes.map((r, index) => {\n  const rawSteps = Array.isArray(r.steps) ? r.steps : [];\n  const stepTitles = [];\n  const stepBodies = [];\n  const flatSteps = [];\n\n  for (const s of rawSteps) {\n    if (s && typeof s === \"object\") {\n      const t = String(s.title ?? \"\").trim();\n      const d = String(s.description ?? \"\").trim();\n      const title = t || (d ? splitStepText(d).title : \"\");\n      const body = d || (t ? splitStepText(t).body : \"\");\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    } else {\n      const text = String(s ?? \"\").trim();\n      const { title, body } = splitStepText(text);\n      stepTitles.push(title);\n      stepBodies.push(body);\n      flatSteps.push(body || title);\n    }\n  }\n\n  function parseBasic(raw) {\n    const s = String(raw ?? \"\").trim();\n    if (!s) return null;\n    let m = s.match(/^(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)\\s+(.+)$/);\n    if (m) {\n      return {\n        amount: Number(m[1].replace(\",\", \".\")),\n        unit: m[2],\n        name: m[3].trim(),\n        raw: s,\n      };\n    }\n    m = s.match(/^(.+?)\\s+(\\d+(?:[.,]\\d+)?)\\s*([a-zA-ZäöüÄÖÜ]+)$/);\n    if (m) {\n      return {\n        name: m[1].trim(),\n        amount: Number(m[2].replace(\",\", \".\")),\n        unit: m[3],\n        raw: s,\n      };\n    }\n    return { name: s, raw: s };\n  }\n\n  function normalizeMissingBasics(arr) {\n    const list = Array.isArray(arr) ? arr : [];\n    return list\n      .map((x) => {\n        if (x && typeof x === \"object\") {\n          const name = String(x.name ?? \"\").trim();\n          if (!name) return null;\n          const amount =\n            x.amount == null || x.amount === \"\"\n              ? undefined\n              : Number(String(x.amount).replace(\",\", \".\"));\n          const unit = x.unit != null ? String(x.unit).trim() : undefined;\n\n          return {\n            name,\n            amount: Number.isFinite(amount) ? amount : undefined,\n            unit: unit || undefined,\n            raw: typeof x.raw === \"string\" ? x.raw : undefined,\n          };\n        }\n        return parseBasic(x);\n      })\n      .filter(Boolean)\n      .filter(\n        (v, i, a) =>\n          a.findIndex(\n            (t) =>\n              t.name === v.name && t.amount === v.amount && t.unit === v.unit,\n          ) === i,\n      );\n  }\n\n  function stripUndefined(obj) {\n    if (Array.isArray(obj)) {\n      return obj.map(stripUndefined);\n    }\n    if (obj && typeof obj === \"object\") {\n      return Object.fromEntries(\n        Object.entries(obj)\n          .filter(([_, v]) => v !== undefined)\n          .map(([k, v]) => [k, stripUndefined(v)]),\n      );\n    }\n    return obj;\n  }\n\n  function finalizeMissingBasics(arr) {\n    let basics = stripUndefined(normalizeMissingBasics(arr));\n    basics = basics.filter(\n      (b) => b && b.name && (b.amount == null || b.amount > 0),\n    );\n    const byName = new Map(\n      basics.map((b) => [String(b.name).toLowerCase().trim(), b]),\n    );\n    const wanted = [\n      { key: \"salt\", def: { name: \"salt\", amount: 1, unit: \"pinch\" } },\n      { key: \"pepper\", def: { name: \"pepper\", amount: 1, unit: \"pinch\" } },\n      { key: \"oil\", def: { name: \"oil\", amount: 1, unit: \"tbsp\" } },\n    ];\n    const result = wanted.map(({ key, def }) => {\n      const existing = byName.get(key);\n      if (!existing) return def;\n      return {\n        name: def.name,\n        amount:\n          existing.amount != null && existing.amount > 0\n            ? existing.amount\n            : def.amount,\n        unit: existing.unit ? existing.unit : def.unit,\n        ...(existing.raw ? { raw: existing.raw } : {}),\n      };\n    });\n    return result;\n  }\n\n  return {\n    json: {\n      title: (r.title || \"\").trim() || `Recipe ${index + 1}`,\n      ingredientsUsed:\n        Array.isArray(r.ingredientsUsed) && r.ingredientsUsed.length\n          ? r.ingredientsUsed\n          : meta.inputIngredients,\n      missingBasics: finalizeMissingBasics(r.missingBasics),\n      steps: flatSteps,\n      stepTitles,\n      stepBodies,\n      helperTodos: Array.isArray(r.helperTodos) ? r.helperTodos : [],\n      servings: Number(meta.servings),\n      energyKcal: NUTRITION_BASE.energyKcal,\n      proteinG: NUTRITION_BASE.proteinG,\n      fatG: NUTRITION_BASE.fatG,\n      carbsG: NUTRITION_BASE.carbsG,\n      createdAt: now,\n      likes: 0,\n      tags: buildDisplayTags(meta),\n      timeCategory: meta.cookingTime ?? null,\n      cuisine: meta.cuisine ?? null,\n      diet: meta.diet ?? null,\n      helpersCount:\n        meta.helpersCount != null ? Number(meta.helpersCount) : null,\n    },\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        624
+      ],
+      "id": "a7972503-5f41-41a5-8983-9fe28d2afdb0",
+      "name": "parse_and_validate_after_repair"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{ $json.valid !== false && !!$json.title && Array.isArray($json.steps) && $json.steps.length >= 4 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1088,
+        624
+      ],
+      "id": "790b234d-08a4-4b31-a56f-aa82820d737a",
+      "name": "valid_recipe_after_repair"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be999e1d-b12c-455f-8cf6-d5631e8ea2cf",
+              "leftValue": "={{\n  $json.valid === false &&\n  ['JSON_PARSE_FAILED','NOT_EXACTLY_3_RECIPES'].includes($json.reason)\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        144,
+        800
+      ],
+      "id": "cdb8371a-1fea-447f-bb23-233c22cbc724",
+      "name": "if_needs_repair_prompt"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "create",
+        "projectId": "=code-a-cuisine-ba168",
+        "collection": "recipes",
+        "columns": "title, ingredientsUsed, missingBasics, steps, stepTitles, stepBodies, helperTodos, servings, createdAt, likes, tags, timeCategory, cuisine, diet, helpersCount, energyKcal, proteinG, fatG, carbsG",
+        "simple": false
+      },
+      "name": "create_recipe_document_after_repair",
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "position": [
+        1328,
+        608
+      ],
+      "typeVersion": 1,
+      "id": "e7b1ecc6-9e79-4275-a5dc-983fc696aaee",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleApi": {
+          "id": "dWVOhrB3gWsDc7h1",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": "=422",
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "Generator failed after retry",
+              "type": "string"
+            },
+            {
+              "id": "e5ae0a57-2f12-416b-840f-0cba432722a3",
+              "name": "code",
+              "value": "GENERATOR_FAILED",
+              "type": "string"
+            },
+            {
+              "id": "b8a21d90-3a93-4174-89f9-8f0ceedfe9c2",
+              "name": "stage",
+              "value": "generator_failed",
+              "type": "string"
+            },
+            {
+              "id": "cacbfdc5-9319-487a-b005-d7583c2574de",
+              "name": "executionId",
+              "value": "={{$execution.id}}",
+              "type": "string"
+            },
+            {
+              "id": "6ee63dea-81d5-4cb5-aaab-a47794aec5a6",
+              "name": "workflow",
+              "value": "={{$workflow.name}}",
+              "type": "string"
+            },
+            {
+              "id": "f0859ef2-5288-4d3a-a390-559ba152da8c",
+              "name": "timestamp",
+              "value": "={{$now}}",
+              "type": "string"
+            },
+            {
+              "id": "7937b3b2-33c9-4039-b926-24ba6a942ed7",
+              "name": "=stack",
+              "value": "=",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        848
+      ],
+      "id": "024124af-2030-435d-97a3-6d0d69972000",
+      "name": "set_error_unprocessable_generator_failed"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 422 }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1696,
+        848
+      ],
+      "id": "bacb1f12-2103-4a9c-a5b9-3ef5ceea3907",
+      "name": "respond_422_bad_request"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ Number($json.status) || 200 }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1744,
+        608
+      ],
+      "id": "d59ac4e0-d751-445d-aed1-0a3dc37adeec",
+      "name": "respond_200_OK_recipes_after_repair"
     },
     {
       "parameters": {
@@ -1192,157 +1257,81 @@
         1120
       ],
       "id": "954d48a3-1c02-4f9b-afad-48f405f4ddfe",
+      "name": "set_error_under_limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": "=422",
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "At least 3 ingredients required",
+              "type": "string"
+            },
+            {
+              "id": "e5ae0a57-2f12-416b-840f-0cba432722a3",
+              "name": "code",
+              "value": "VALIDATION_FAILED",
+              "type": "string"
+            },
+            {
+              "id": "b8a21d90-3a93-4174-89f9-8f0ceedfe9c2",
+              "name": "stage",
+              "value": "validation_failed",
+              "type": "string"
+            },
+            {
+              "id": "cacbfdc5-9319-487a-b005-d7583c2574de",
+              "name": "executionId",
+              "value": "={{$execution.id}}",
+              "type": "string"
+            },
+            {
+              "id": "6ee63dea-81d5-4cb5-aaab-a47794aec5a6",
+              "name": "workflow",
+              "value": "={{$workflow.name}}",
+              "type": "string"
+            },
+            {
+              "id": "f0859ef2-5288-4d3a-a390-559ba152da8c",
+              "name": "timestamp",
+              "value": "={{$now}}",
+              "type": "string"
+            },
+            {
+              "id": "7937b3b2-33c9-4039-b926-24ba6a942ed7",
+              "name": "=stack",
+              "value": "=",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1888,
+        1360
+      ],
+      "id": "59324abf-e597-4c03-9e19-61aea6e40437",
       "name": "set_error_unprocessable_entity"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
-              "name": "status",
-              "value": "=422",
-              "type": "number"
-            },
-            {
-              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
-              "name": "message",
-              "value": "Recipe output could not be repaired to valid format.",
-              "type": "string"
-            },
-            {
-              "id": "e5ae0a57-2f12-416b-840f-0cba432722a3",
-              "name": "code",
-              "value": "REPAIR_FAILED",
-              "type": "string"
-            },
-            {
-              "id": "b8a21d90-3a93-4174-89f9-8f0ceedfe9c2",
-              "name": "stage",
-              "value": "repair_failed",
-              "type": "string"
-            },
-            {
-              "id": "cacbfdc5-9319-487a-b005-d7583c2574de",
-              "name": "executionId",
-              "value": "={{$execution.id}}",
-              "type": "string"
-            },
-            {
-              "id": "6ee63dea-81d5-4cb5-aaab-a47794aec5a6",
-              "name": "workflow",
-              "value": "={{$workflow.name}}",
-              "type": "string"
-            },
-            {
-              "id": "f0859ef2-5288-4d3a-a390-559ba152da8c",
-              "name": "timestamp",
-              "value": "={{$now}}",
-              "type": "string"
-            },
-            {
-              "id": "7937b3b2-33c9-4039-b926-24ba6a942ed7",
-              "name": "=stack",
-              "value": "=",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        640,
-        1136
-      ],
-      "id": "bf903d4c-d6c8-4706-bdb9-ab6fde10e5b9",
-      "name": "Set_error_repair_failed"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
-              "name": "status",
-              "value": "=422",
-              "type": "number"
-            },
-            {
-              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
-              "name": "message",
-              "value": "Generator failed after retry",
-              "type": "string"
-            },
-            {
-              "id": "e5ae0a57-2f12-416b-840f-0cba432722a3",
-              "name": "code",
-              "value": "GENERATOR_FAILED",
-              "type": "string"
-            },
-            {
-              "id": "b8a21d90-3a93-4174-89f9-8f0ceedfe9c2",
-              "name": "stage",
-              "value": "generator_failed",
-              "type": "string"
-            },
-            {
-              "id": "cacbfdc5-9319-487a-b005-d7583c2574de",
-              "name": "executionId",
-              "value": "={{$execution.id}}",
-              "type": "string"
-            },
-            {
-              "id": "6ee63dea-81d5-4cb5-aaab-a47794aec5a6",
-              "name": "workflow",
-              "value": "={{$workflow.name}}",
-              "type": "string"
-            },
-            {
-              "id": "f0859ef2-5288-4d3a-a390-559ba152da8c",
-              "name": "timestamp",
-              "value": "={{$now}}",
-              "type": "string"
-            },
-            {
-              "id": "7937b3b2-33c9-4039-b926-24ba6a942ed7",
-              "name": "=stack",
-              "value": "=",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1360,
-        848
-      ],
-      "id": "024124af-2030-435d-97a3-6d0d69972000",
-      "name": "set_error_unprocessable(generator failed)"
     }
   ],
   "pinData": {},
   "connections": {
-    "AutoFixSoftIssues": {
-      "main": [
-        [
-          {
-            "node": "Create_recipe_document(initial)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "OpenAI Chat Model": {
       "ai_languageModel": [
         [
           {
-            "node": "LLM_Chain_generate_3_recipes_output",
+            "node": "LLM_chain_generate_3_recipes_output",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -1360,22 +1349,132 @@
         ]
       ]
     },
-    "BuildUsageKey": {
+    "LLM_chain_repair_output": {
       "main": [
         [
           {
-            "node": "HasUser",
+            "node": "parse_and_validate_after_repair",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "UnderLimit": {
+    "upsert_usage_counter": {
       "main": [
         [
           {
-            "node": "upsert_usage_counter",
+            "node": "build_recipe_prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_event": {
+      "main": [
+        [
+          {
+            "node": "respond_422_unprocessable_entity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_event1": {
+      "main": [
+        [
+          {
+            "node": "respond_429_error_json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_successed_saved_recipes": {
+      "main": [
+        [
+          {
+            "node": "respond_200_OK_recipes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_successed_saved_after_repair": {
+      "main": [
+        [
+          {
+            "node": "respond_200_OK_recipes_after_repair",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_event4": {
+      "main": [
+        [
+          {
+            "node": "respond_422_bad_request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_event2": {
+      "main": [
+        [
+          {
+            "node": "respond_429_too_many_requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_event3": {
+      "main": [
+        [
+          {
+            "node": "respond_422_unprocessable_entity2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_successed_saved_after_autoFix": {
+      "main": [
+        [
+          {
+            "node": "respond_200_OK_recipes_after_autofix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_recipes": {
+      "main": [
+        [
+          {
+            "node": "validate_request_body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validate_request_body": {
+      "main": [
+        [
+          {
+            "node": "build_usage_key",
             "type": "main",
             "index": 0
           }
@@ -1389,123 +1488,43 @@
         ]
       ]
     },
-    "ComputeCount": {
+    "soft_validation_failure": {
       "main": [
         [
           {
-            "node": "UnderLimit",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HasUser": {
-      "main": [
-        [
-          {
-            "node": "Get_usage_counter",
+            "node": "autofix_soft_issues",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "set_error_bad_request(missing clientId)",
+            "node": "if_needs_repair_prompt",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "generateRecipes": {
+    "valid_recipe": {
       "main": [
         [
           {
-            "node": "validate_requestBody",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "validate_requestBody": {
-      "main": [
-        [
-          {
-            "node": "BuildUsageKey",
+            "node": "create_recipe_document_after_autofix",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "set_error_unprocessable_entity1",
+            "node": "set_error_repair_failed",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "build_recipe_prompt(from request)": {
-      "main": [
-        [
-          {
-            "node": "LLM_Chain_generate_3_recipes_output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "parse_and_validate_LLM _output(hard rules)": {
-      "main": [
-        [
-          {
-            "node": "IF_soft_validation_failure",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF_soft_validation_failure": {
-      "main": [
-        [
-          {
-            "node": "AutoFixSoftIssues",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "IF_needs_repair_prompt(parse/3 recipes)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF_needs_repair_prompt(parse/3 recipes)": {
-      "main": [
-        [
-          {
-            "node": "build_repair_prompt(include failure reason)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "IF_valid_recipe(after autofix)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "build_repair_prompt(include failure reason)": {
+    "build_repair_prompt": {
       "main": [
         [
           {
@@ -1516,230 +1535,91 @@
         ]
       ]
     },
-    "parse_and_validate(after repair)": {
+    "parse_and_validate_LLM _output": {
       "main": [
         [
           {
-            "node": "IF_valid_recipe(after repair)",
+            "node": "soft_validation_failure",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF_valid_recipe(after autofix)": {
+    "LLM_chain_generate_3_recipes_output": {
       "main": [
         [
           {
-            "node": "Create_recipe_document(after autofix)",
+            "node": "parse_and_validate_LLM _output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "build_recipe_prompt": {
+      "main": [
+        [
+          {
+            "node": "LLM_chain_generate_3_recipes_output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "under_limit": {
+      "main": [
+        [
+          {
+            "node": "upsert_usage_counter",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Set_error_repair_failed",
+            "node": "set_error_under_limit",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF_valid_recipe(after repair)": {
+    "compute_count": {
       "main": [
         [
           {
-            "node": "Create_recipe_document(after repair)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "set_error_unprocessable(generator failed)",
+            "node": "under_limit",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Create_recipe_document(initial)": {
+    "get_usage_counter": {
       "main": [
         [
           {
-            "node": "set_successed_saved_recipes",
+            "node": "compute_count",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Create_recipe_document(after repair)": {
+    "build_usage_key": {
       "main": [
         [
           {
-            "node": "set_successed_saved_after_repair",
+            "node": "has_user",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "LLM_chain_repair_output": {
-      "main": [
-        [
-          {
-            "node": "parse_and_validate(after repair)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "LLM_Chain_generate_3_recipes_output": {
-      "main": [
-        [
-          {
-            "node": "parse_and_validate_LLM _output(hard rules)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get_usage_counter": {
-      "main": [
-        [
-          {
-            "node": "ComputeCount",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "upsert_usage_counter": {
-      "main": [
-        [
-          {
-            "node": "build_recipe_prompt(from request)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set_error_unprocessable_entity1": {
-      "main": [
-        [
-          {
-            "node": "log_event",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create_recipe_document(after autofix)": {
-      "main": [
-        [
-          {
-            "node": "set_successed_saved_after_autoFix",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "log_event": {
-      "main": [
-        [
-          {
-            "node": "Respond_422_unprocessable_entity",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "log_event1": {
-      "main": [
-        [
-          {
-            "node": "Respond_429_error_JSON",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set_successed_saved_recipes": {
-      "main": [
-        [
-          {
-            "node": "Respond_200_OK_recipes",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set_successed_saved_after_repair": {
-      "main": [
-        [
-          {
-            "node": "Respond_200_OK_recipes_after_repair",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "log_event4": {
-      "main": [
-        [
-          {
-            "node": "Respond_422_bad_request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "log_event2": {
-      "main": [
-        [
-          {
-            "node": "Respond_429_too_many_requests",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "log_event3": {
-      "main": [
-        [
-          {
-            "node": "Respond_422_unprocessable_entity2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set_successed_saved_after_autoFix": {
-      "main": [
-        [
-          {
-            "node": "Respond_200_OK_recipes_after_autofix",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set_error_bad_request(missing clientId)": {
+    "set_error_bad_request": {
       "main": [
         [
           {
@@ -1750,18 +1630,47 @@
         ]
       ]
     },
-    "set_error_unprocessable_entity": {
+    "has_user": {
       "main": [
         [
           {
-            "node": "log_event1",
+            "node": "get_usage_counter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "set_error_bad_request",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Set_error_repair_failed": {
+    "autofix_soft_issues": {
+      "main": [
+        [
+          {
+            "node": "create_recipe_document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_recipe_document": {
+      "main": [
+        [
+          {
+            "node": "set_successed_saved_recipes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_error_repair_failed": {
       "main": [
         [
           {
@@ -1772,11 +1681,102 @@
         ]
       ]
     },
-    "set_error_unprocessable(generator failed)": {
+    "create_recipe_document_after_autofix": {
+      "main": [
+        [
+          {
+            "node": "set_successed_saved_after_autoFix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse_and_validate_after_repair": {
+      "main": [
+        [
+          {
+            "node": "valid_recipe_after_repair",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "valid_recipe_after_repair": {
+      "main": [
+        [
+          {
+            "node": "create_recipe_document_after_repair",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "set_error_unprocessable_generator_failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if_needs_repair_prompt": {
+      "main": [
+        [
+          {
+            "node": "build_repair_prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "valid_recipe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_recipe_document_after_repair": {
+      "main": [
+        [
+          {
+            "node": "set_successed_saved_after_repair",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_error_unprocessable_generator_failed": {
       "main": [
         [
           {
             "node": "log_event4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_error_under_limit": {
+      "main": [
+        [
+          {
+            "node": "log_event1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_error_unprocessable_entity": {
+      "main": [
+        [
+          {
+            "node": "log_event",
             "type": "main",
             "index": 0
           }
@@ -1790,7 +1790,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "050a833c-04c4-44c1-b201-7a89ec349b2b",
+  "versionId": "61c8416a-edf8-430b-8bc6-a63eb6c29068",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"

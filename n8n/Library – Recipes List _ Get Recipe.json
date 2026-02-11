@@ -14,7 +14,7 @@
         0
       ],
       "id": "446531ba-71a8-488e-b967-a845c47c0bf4",
-      "name": "getRecipes",
+      "name": "get_recipes",
       "webhookId": "3e38d144-dae7-439e-aa93-316d5cbb0a05"
     },
     {
@@ -25,7 +25,7 @@
         "database": "=(default)",
         "collection": "recipes"
       },
-      "name": "db_firestore_listRecipes",
+      "name": "db_firestore_list_recipes",
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "position": [
         208,
@@ -59,11 +59,11 @@
         0
       ],
       "id": "7d295120-1f7c-4dfa-a2ae-21fee3668487",
-      "name": "sort_byLikesDesc"
+      "name": "sort_by_likes_desc"
     },
     {
       "parameters": {
-        "jsCode": "const q = $node[\"getRecipes\"].json.query ?? {};\nconst limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)));\nconst offset = Math.max(0, Number(q.offset ?? 0));\nconst all = $input.all();\nconst page = all.slice(offset, offset + limit);\nreturn page;\n"
+        "jsCode": "const q = $node[\"get_recipes\"].json.query ?? {};\nconst limit = Math.max(1, Math.min(50, Number(q.limit ?? 20)));\nconst offset = Math.max(0, Number(q.offset ?? 0));\nconst all = $input.all();\nconst page = all.slice(offset, offset + limit);\nreturn page;\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -72,7 +72,7 @@
         0
       ],
       "id": "40f7e204-f980-49b5-a3b3-0d9ca3df9e37",
-      "name": "page_limitOffset"
+      "name": "page_limit_offset"
     },
     {
       "parameters": {
@@ -101,49 +101,49 @@
         0
       ],
       "id": "eb2dea21-6d35-40ac-81a0-80d856897147",
-      "name": "out_shapeResponse_200"
+      "name": "out_shape_response_200"
     }
   ],
   "pinData": {},
   "connections": {
-    "getRecipes": {
+    "get_recipes": {
       "main": [
         [
           {
-            "node": "db_firestore_listRecipes",
+            "node": "db_firestore_list_recipes",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "db_firestore_listRecipes": {
+    "db_firestore_list_recipes": {
       "main": [
         [
           {
-            "node": "sort_byLikesDesc",
+            "node": "sort_by_likes_desc",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "sort_byLikesDesc": {
+    "sort_by_likes_desc": {
       "main": [
         [
           {
-            "node": "page_limitOffset",
+            "node": "page_limit_offset",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "page_limitOffset": {
+    "page_limit_offset": {
       "main": [
         [
           {
-            "node": "out_shapeResponse_200",
+            "node": "out_shape_response_200",
             "type": "main",
             "index": 0
           }
@@ -157,7 +157,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "47e8572d-00cc-4393-a6fc-2657591aae37",
+  "versionId": "2cf2c1a0-021a-4431-9531-9295dab4f5c8",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"

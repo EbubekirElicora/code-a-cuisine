@@ -9,7 +9,7 @@
         "options": {}
       },
       "id": "06223ce8-b23d-4184-a9f8-503811ddd697",
-      "name": "receiveLikeRequest",
+      "name": "receive_like_request",
       "type": "n8n-nodes-base.webhook",
       "position": [
         256,
@@ -60,14 +60,14 @@
         -80
       ],
       "id": "2f284b34-bb09-4f32-a462-8850ff4843be",
-      "name": "validateRecipeId"
+      "name": "validate_recipe_id"
     },
     {
       "parameters": {
         "authentication": "serviceAccount",
         "projectId": "code-a-cuisine-ba168",
         "collection": "recipes",
-        "documentId": "={{ $node[\"receiveLikeRequest\"].json.body.id }}"
+        "documentId": "={{ $node[\"receive_like_request\"].json.body.id }}"
       },
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "typeVersion": 1.1,
@@ -76,7 +76,7 @@
         -224
       ],
       "id": "d5aa187e-4afe-4f56-aca0-12685e9ac0c2",
-      "name": "loadRecipeFromFirestore",
+      "name": "load_recipe_from_firestore",
       "credentials": {
         "googleApi": {
           "id": "dWVOhrB3gWsDc7h1",
@@ -89,15 +89,44 @@
         "assignments": {
           "assignments": [
             {
+              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
+              "name": "status",
+              "value": 400,
+              "type": "number"
+            },
+            {
+              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
+              "name": "message",
+              "value": "Ungültige Eingabe: ingredients muss Liste sein, servings 1–12",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "6bfb0e9f-6f08-42a7-98db-4c282925f274",
+      "name": "build_error_response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
               "id": "82a0f99d-ac03-441c-baf8-4b0e2f392304",
               "name": "=id",
-              "value": "={{$node[\"receiveLikeRequest\"].json.body.id}}",
+              "value": "={{$node[\"receive_like_request\"].json.body.id}}",
               "type": "string"
             },
             {
               "id": "6b146ea9-345b-4b22-8f51-584500ae5271",
               "name": "=likes",
-              "value": "={{ \n  Math.max(\n    0,\n    Number($json.likes ?? 0) +\n    Number($node[\"receiveLikeRequest\"].json.body.delta ?? 1))}}",
+              "value": "={{ \n  Math.max(\n    0,\n    Number($json.likes ?? 0) +\n    Number($node[\"receive_like_request\"].json.body.delta ?? 1))}}",
               "type": "number"
             }
           ]
@@ -111,7 +140,7 @@
         -224
       ],
       "id": "027b8eed-ac74-4b64-bebe-107ec71e39be",
-      "name": "calculateUpdatedLikes"
+      "name": "calculate_updated_likes"
     },
     {
       "parameters": {
@@ -122,7 +151,7 @@
         "updateKey": "=id",
         "columns": "likes"
       },
-      "name": "saveLikesToFirestore",
+      "name": "save_likes_to_firestore",
       "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
       "position": [
         1264,
@@ -156,7 +185,7 @@
             {
               "id": "1dfacbba-2232-4791-bcf4-ad2cd89250f4",
               "name": "id",
-              "value": "={{ $node[\"receiveLikeRequest\"].json.body.id }}",
+              "value": "={{ $node[\"receive_like_request\"].json.body.id }}",
               "type": "string"
             },
             {
@@ -176,96 +205,67 @@
         -224
       ],
       "id": "1330879f-37ca-46d0-9667-7106cfe29323",
-      "name": "buildSuccessResponse"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "fc8c45ed-5ee9-495b-8c59-35f9b4879b03",
-              "name": "status",
-              "value": 400,
-              "type": "number"
-            },
-            {
-              "id": "8688100c-64e8-4d34-9fd9-0d927374755f",
-              "name": "message",
-              "value": "Ungültige Eingabe: ingredients muss Liste sein, servings 1–12",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        1072,
-        0
-      ],
-      "id": "6bfb0e9f-6f08-42a7-98db-4c282925f274",
-      "name": "buildErrorResponse"
+      "name": "build_success_response"
     }
   ],
   "pinData": {},
   "connections": {
-    "receiveLikeRequest": {
+    "receive_like_request": {
       "main": [
         [
           {
-            "node": "validateRecipeId",
+            "node": "validate_recipe_id",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "validateRecipeId": {
+    "validate_recipe_id": {
       "main": [
         [
           {
-            "node": "loadRecipeFromFirestore",
+            "node": "load_recipe_from_firestore",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "buildErrorResponse",
+            "node": "build_error_response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "loadRecipeFromFirestore": {
+    "load_recipe_from_firestore": {
       "main": [
         [
           {
-            "node": "calculateUpdatedLikes",
+            "node": "calculate_updated_likes",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "calculateUpdatedLikes": {
+    "calculate_updated_likes": {
       "main": [
         [
           {
-            "node": "saveLikesToFirestore",
+            "node": "save_likes_to_firestore",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "saveLikesToFirestore": {
+    "save_likes_to_firestore": {
       "main": [
         [
           {
-            "node": "buildSuccessResponse",
+            "node": "build_success_response",
             "type": "main",
             "index": 0
           }
@@ -279,7 +279,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "168631cd-cba0-4b95-9ee2-7730d804d7b7",
+  "versionId": "7f90da84-f95c-448a-adcb-9091c4c92425",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ad3f9d388f26bf32f1df50a58fda8b4ee6fae7e3c9a0e70df8c27bf65882f8d8"
